@@ -1,0 +1,16 @@
+name: ${project.name}
+description: ${project.description}
+version: ${project.version}
+main: org.avarion.plugin_hider.PluginHider
+api-version: 1.20
+author: svaningelgem
+load: POSTWORLD
+
+depend:
+  - ProtocolLib
+
+commands:
+  pluginhide:
+    description: Reloads the PluginHiders configuration
+    usage: /pluginhide reload
+    aliases: [ph]
