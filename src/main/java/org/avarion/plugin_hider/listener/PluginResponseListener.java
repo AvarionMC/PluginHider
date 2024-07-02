@@ -8,38 +8,68 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.AdventureComponentConverter;
 import org.avarion.plugin_hider.PluginHider;
+import org.avarion.plugin_hider.util.Constants;
 import org.avarion.plugin_hider.util.ReceivedPackets;
 import org.avarion.plugin_hider.util.Reflection;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class PluginResponseListener extends PacketAdapter {
     final private PluginHider plugin;
 
     public PluginResponseListener(PluginHider plugin) {
-        super(plugin, ListenerPriority.HIGHEST, PacketType.Play.Server.SYSTEM_CHAT);
+        super(plugin, ListenerPriority.HIGHEST, Arrays.asList(PacketType.Play.Server.SYSTEM_CHAT, PacketType.Play.Client.CHAT_COMMAND));
 
         this.plugin = plugin;
     }
 
     @Override
-    public void onPacketSending(PacketEvent event) {
+    public void onPacketReceiving(@NotNull PacketEvent event) {
+        if (event.getPacketType() != PacketType.Play.Client.CHAT_COMMAND) {
+            return;
+        }
+
+        String cmd = event.getPacket().getModifier().read(0).toString().toLowerCase();
+        if (!Constants.isPluginCmd("/" + cmd.split(" ", 2)[0])) {
+            return;
+        }
+
+        plugin.cachedUsers.put(event.getPlayer().getUniqueId(), new ReceivedPackets(10));
+    }
+
+    @Override
+    public void onPacketSending(@NotNull PacketEvent event) {
+        if (event.getPacketType() != PacketType.Play.Server.SYSTEM_CHAT) {
+            return;
+        }
+
         UUID player = event.getPlayer().getUniqueId();
         if (!plugin.cachedUsers.containsKey(player)) {
             return;
         }
 
         ReceivedPackets entry = plugin.cachedUsers.get(player);
-        if (entry.isFinished()) {
-            return;
-        }
 
         // https://github.com/kangarko/Foundation/blob/master/src/main/java/org/mineacademy/fo/model/PacketListener.java#L307C26-L307C82
         String text = readChatMessage(event.getPacket());
         entry.addSystemChatLine(text);
-        int a = 1;
+        if (entry.amountOfPlugins == 0) {
+            // No plugins...
+            plugin.cachedUsers.remove(player);
+            return;
+        }
+
+        // Don't send out the original text.
+        event.setCancelled(true);
+
+        if (entry.isFinished()) {
+            // Send messages if there is anything to send.
+            plugin.cachedUsers.remove(player);
+        }
     }
 
     private @Nullable String readChatMessage(PacketContainer packet) {
