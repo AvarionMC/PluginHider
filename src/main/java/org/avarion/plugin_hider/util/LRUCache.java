@@ -13,6 +13,12 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
 
     @Override
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-        return size() > maxSize;
+        if (size() > maxSize) {
+            return true;
+        }
+        if (eldest.getValue() instanceof ReceivedPackets) {
+            return ((ReceivedPackets) eldest.getValue()).isStale();
+        }
+        return false;
     }
 }

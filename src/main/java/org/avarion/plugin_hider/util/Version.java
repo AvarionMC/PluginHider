@@ -17,7 +17,8 @@ public class Version implements Comparable<Version> {
             this.major = matcher.group(1) != null ? Integer.parseInt(matcher.group(1)) : 0;
             this.minor = matcher.group(2) != null ? Integer.parseInt(matcher.group(2)) : 0;
             this.patch = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
-        } else {
+        }
+        else {
             this.major = 0;
             this.minor = 0;
             this.patch = 0;
@@ -37,8 +38,12 @@ public class Version implements Comparable<Version> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
         Version other = (Version) obj;
         return major == other.major && minor == other.minor && patch == other.patch;
     }

@@ -34,11 +34,11 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String[] args) {
-        if ( ! commandSender.isOp() ) {
+        if (!commandSender.isOp()) {
             return false;
         }
 
-        if (args.length == 0){
+        if (args.length == 0) {
             showHelp(commandSender);
             return true;
         }
@@ -52,9 +52,10 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void reloadConfiguration(CommandSender ignored) {
+    private void reloadConfiguration(CommandSender player) {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.config.reload();
+            plugin.getMyConfig().reload();
+            player.sendMessage("Reloaded the configuration.");
             plugin.logger.info("Reloaded the configuration.");
         });
     }
@@ -80,11 +81,11 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String[] args) {
-        if ( args.length != 1 ) {
+        if (args.length != 1) {
             return null;
         }
 
-        if ( ! commandSender.isOp() ) {
+        if (!commandSender.isOp()) {
             return null;
         }
 

@@ -1,33 +1,25 @@
 package org.avarion.plugin_hider;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.*;
 import org.avarion.plugin_hider.listener.PluginCommandListener;
 import org.avarion.plugin_hider.listener.PluginResponseListener;
-import org.avarion.plugin_hider.plib.TabComplete;
+import org.avarion.plugin_hider.listener.TabCompleteListener;
 import org.avarion.plugin_hider.util.*;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.UUID;
 
 
 public class PluginHider extends JavaPlugin {
-    Config config = null;
-
-    private ProtocolManager protocolManager = null;
-
-    public Logger logger = null;
     public final Version currentVersion = new Version(getDescription().getVersion());
     public final LRUCache<UUID, ReceivedPackets> cachedUsers = new LRUCache<>(1000);
+    public Logger logger = null;
+    private Config config = null;
+    private ProtocolManager protocolManager = null;
 
     @Override
     public void onEnable() {
@@ -35,8 +27,9 @@ public class PluginHider extends JavaPlugin {
         setupBStats();
         setupConfig();
 
-        setupProtocolLib();
+        addListeners();
         addCommands();
+        setupProtocolLib();
 
         logger.info("Loaded version: " + currentVersion);
         startUpdateCheck();
@@ -57,6 +50,10 @@ public class PluginHider extends JavaPlugin {
 
     private void disableConfig() {
         config = null;
+    }
+
+    public Config getMyConfig() {
+        return config;
     }
     //endregion
 
@@ -82,12 +79,12 @@ public class PluginHider extends JavaPlugin {
         }
 
         protocolManager = ProtocolLibrary.getProtocolManager();
-        protocolManager.addPacketListener(new PluginCommandListener(this));
         protocolManager.addPacketListener(new PluginResponseListener(this));
+        protocolManager.addPacketListener(new TabCompleteListener(this));
     }
 
     private void disableProtocolLib() {
-        if ( protocolManager != null ) {
+        if (protocolManager != null) {
             protocolManager.removePacketListeners(this);
             protocolManager = null;
         }
@@ -102,9 +99,13 @@ public class PluginHider extends JavaPlugin {
     }
     //endregion
 
+    private void addListeners() {
+        Bukkit.getPluginManager().registerEvents(new PluginCommandListener(this), this);
+    }
+
     private void addCommands() {
         PluginCommand cmd = getCommand("pluginhide");
-        if ( cmd == null ) {
+        if (cmd == null) {
             logger.error("Cannot find the pluginhide command??");
             getPluginLoader().disablePlugin(this);
             return;

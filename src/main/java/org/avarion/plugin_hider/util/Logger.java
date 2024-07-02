@@ -9,27 +9,19 @@ public class Logger {
         this.logger = logger;
     }
 
-    public void info(String message) {
-        logger.info(Constants.PREFIX + message);
+    public void info(String message, Object... args) {
+        logger.log(Level.INFO, message, args);
     }
 
-    public void warning(String message) {
-        logger.warning(Constants.PREFIX + message);
+    public void warning(String message, Object... args) {
+        logger.log(Level.WARNING, message, args);
     }
 
-    public void error(String message) {
-        logger.severe(Constants.PREFIX + message);
+    public void error(String message, Object... args) {
+        logger.log(Level.SEVERE, message, args);
     }
 
-    public void debug(Level level, String message) {
-        logger.fine(Constants.PREFIX + message);
-    }
-
-    public void log(Level level, String message, Throwable thrown) {
-        logger.log(level, Constants.PREFIX + message, thrown);
-    }
-
-    public void log(Level level, String message) {
-        logger.log(level, Constants.PREFIX + message);
+    public void debug(String message, Object... args) {
+        logger.log(Level.FINE, message, args);
     }
 }
