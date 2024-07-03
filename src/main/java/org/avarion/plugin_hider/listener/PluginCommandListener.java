@@ -2,7 +2,6 @@ package org.avarion.plugin_hider.listener;
 
 import org.avarion.plugin_hider.PluginHider;
 import org.avarion.plugin_hider.util.Constants;
-import org.avarion.plugin_hider.util.ReceivedPackets;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,16 +21,9 @@ public class PluginCommandListener implements Listener {
         String[] args = event.getMessage().split("\\s+");
 
         String firstArg = args[0].toLowerCase();
-        if (Constants.isPluginCmd(firstArg)) {
-            handlePluginsCommand(event);
-        }
         if (Constants.isVersionCmd(firstArg)) {
             handleVersionCommand(event);
         }
-    }
-
-    private void handlePluginsCommand(@NotNull PlayerCommandPreprocessEvent event) {
-        plugin.cachedUsers.put(event.getPlayer().getUniqueId(), new ReceivedPackets(10));
     }
 
     private void handleVersionCommand(@NotNull PlayerCommandPreprocessEvent event) {

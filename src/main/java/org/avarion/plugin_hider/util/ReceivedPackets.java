@@ -1,55 +1,42 @@
 package org.avarion.plugin_hider.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.network.chat.ChatClickable;
-import net.minecraft.network.chat.ChatMessage;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ReceivedPackets {
     private final static Pattern amountPluginsPattern = Pattern.compile("\\(\\s*(\\d+)\\s*\\):");
 
+    private static final int CACHE_SIZE = 1000;
+    private static final Map<String, String> cache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
+        protected boolean removeEldestEntry(Map.Entry eldest) {
+            return size() > CACHE_SIZE;
+        }
+    };
+
     public final ZonedDateTime created = ZonedDateTime.now(ZoneOffset.UTC);
     private final int maxSecondsDelay;
-    private final ArrayList<String> receivedMessages = new ArrayList<>();
-    private final ArrayList<String> pluginsSeen = new ArrayList<>();
+    private final List<String> pluginsSeen = new ArrayList<>();
+    private final Config cfg;
 
     public Integer amountOfPlugins = null;
-    public Integer maxLineLength = 0;
 
-    public ReceivedPackets(int maxSecondsDelay) {
+    public ReceivedPackets(Config cfg, int maxSecondsDelay) {
+        this.cfg = cfg;
         this.maxSecondsDelay = maxSecondsDelay;
-
-        buildCurrentPluginList();
-    }
-
-    private void buildCurrentPluginList() {
-        pluginsSeen.clear();
-        for (var plugin : Bukkit.getPluginManager().getPlugins()) {
-            String tmp = plugin.getDescription().getName();
-            if (!plugin.getDescription().getProvides().isEmpty()) {
-                tmp += " (" + String.join(", ", plugin.getDescription().getProvides()) + ")";
-            }
-            pluginsSeen.add(tmp);
-        }
-
-        TextComponent chat = new TextComponent("txt");
-        Bukkit.getServer().getPlayer("ABC").sendRawMessage();
-        chat.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/version ..."));
-
-        ChatMessage msg = new ChatMessage("message");
-        msg.msg.getChatModifier().setChatClickable(new ChatClickable(EnumClickAction.RUN_COMMAND))
-        pluginsSeen.sort(String::compareToIgnoreCase);
     }
 
     public boolean isStale() {
@@ -57,11 +44,12 @@ public class ReceivedPackets {
     }
 
     public void addSystemChatLine(final String line) {
-        System.out.println(line);
-
-        receivedMessages.add(line);
-        interpretPluginLine(line);
-        interpretAmountOfPlugins(line);
+        if (amountOfPlugins == null) {
+            interpretAmountOfPlugins(line);
+        }
+        else {
+            interpretPluginLine(line);
+        }
     }
 
     private void interpretPluginLine(final String line) {
@@ -69,24 +57,20 @@ public class ReceivedPackets {
             return;
         }
 
-        String fullText = getTextFromJson(line);
-        if (fullText.length() > maxLineLength) {
-            maxLineLength = fullText.length();
-        }
-
-        //[16:47:08 INFO]: Sensei_Orange issued server command: /pl
-        //[16:47:08 INFO]: [PluginHider] [STDOUT] {"color":"white","text":"Server Plugins (12):"}
-        //[16:47:09 INFO]: [PluginHider] [STDOUT] {"color":"#ED8106","text":"Bukkit Plugins:"}
-        //[16:47:09 INFO]: [PluginHider] [STDOUT] {"extra":[{"color":"dark_gray","text":"- "},{"extra":[{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version Essentials"},"text":"Essentials"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version EssentialsChat"},"text":"EssentialsChat"}],"text":""},{"text":", "},{"extra":[{"color":"red","clickEvent":{"action":"run_command","value":"/version MoneyFromMobs"},"text":"MoneyFromMobs"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version MyCommand"},"text":"MyCommand"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version MythicMobs"},"text":"MythicMobs"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version NotBounties"},"text":"NotBounties"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version PluginHider"},"text":"PluginHider"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version ProtocolLib"},"text":"ProtocolLib"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version TAB"},"text":"TAB"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version TreeCuter"},"text":"TreeCuter"}],"text":""}],"text":""}],"text":" "}
-        //[16:47:09 INFO]: [PluginHider] [STDOUT] {"extra":[{"extra":[{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version ViaBackwards"},"text":"ViaBackwards"}],"text":""},{"text":", "},{"extra":[{"color":"green","clickEvent":{"action":"run_command","value":"/version ViaVersion"},"text":"ViaVersion"}],"text":""}],"text":""}],"text":" "}
-        System.out.println(line);
-    }
-
-    private void interpretAmountOfPlugins(final String line) {
-        if (amountOfPlugins != null) {
+        String fullText = cache.computeIfAbsent(line, this::getTextFromJson);
+        if (fullText.endsWith(":")) {
             return;
         }
 
+        if (fullText.startsWith("- ")) {
+            fullText = fullText.substring(2);
+        }
+        String[] parts = fullText.split(",");
+
+        pluginsSeen.addAll(Arrays.stream(parts).map(String::trim).filter(p -> !p.isEmpty()).toList());
+    }
+
+    private void interpretAmountOfPlugins(final String line) {
         Matcher match = amountPluginsPattern.matcher(line);
         if (match.find()) {
             amountOfPlugins = Integer.parseInt(match.group(1));
@@ -94,36 +78,98 @@ public class ReceivedPackets {
     }
 
     public boolean isFinished() {
-        return amountOfPlugins != null && pluginsSeen.size() == amountOfPlugins;
+        return amountOfPlugins != null && pluginsSeen.size() >= amountOfPlugins;
     }
 
-    private void getTextFromNode(@NotNull StringBuilder tmp, @NotNull JsonNode current) {
-        if (current.isObject()) {
-            if (current.has("extra")) {
-                getTextFromNode(tmp, current.get("extra"));
-            }
+    // region <JSON parsing>
+    private void getTextFromNode(@NotNull final StringBuilder tmp, @NotNull final JsonElement current) {
+        if (current.isJsonObject()) {
+            for (var el : current.getAsJsonObject().entrySet()) {
+                final var val = el.getValue();
 
-            if (current.has("text")) {
-                tmp.append(current.get("text"));
+                switch (el.getKey()) {
+                    case "text" -> tmp.append(val.getAsString());
+                    case "extra" -> getTextFromNode(tmp, val);
+                }
             }
         }
-        else if (current.isArray()) {
-            for (var el : current) {
+        else if (current.isJsonArray()) {
+            for (var el : current.getAsJsonArray()) {
                 getTextFromNode(tmp, el);
             }
+        }
+        else {
+            tmp.append(current.getAsString());
         }
     }
 
     private @NotNull String getTextFromJson(final String line) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            JsonNode root = mapper.readTree(line);
-            StringBuilder tmp = new StringBuilder();
-            getTextFromNode(tmp, root);
-            return tmp.toString();
-        }
-        catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        final Gson json = new Gson();
+        final JsonObject root = json.fromJson(line, JsonObject.class);
+        final StringBuilder tmp = new StringBuilder();
+        getTextFromNode(tmp, root);
+        return tmp.toString().trim();
     }
+    // endregion
+
+    // region <Message sending>
+    public void sendModifiedMessage(@NotNull Player player) {
+        final Player.Spigot pl = player.spigot();
+
+        List<String> newPlugins = pluginsSeen.stream().filter(cfg::shouldShow).toList();
+
+        TextComponent msg = createFirstLine(newPlugins.size());
+        pl.sendMessage(msg);
+
+        if (newPlugins.isEmpty()) {
+            return;
+        }
+
+        msg = createSecondLine();
+        pl.sendMessage(msg);
+
+        msg = createThirdLine(newPlugins);
+        pl.sendMessage(msg);
+    }
+
+    private @NotNull TextComponent createFirstLine(int amount) {
+        TextComponent msg = new TextComponent("Server Plugins (" + amount + "):");
+        msg.setColor(ChatColor.WHITE);
+        return msg;
+    }
+
+    private @NotNull TextComponent createSecondLine() {
+        TextComponent msg = new TextComponent("Bukkit Plugins:");
+        msg.setColor(net.md_5.bungee.api.ChatColor.of("#ed8106"));
+
+        return msg;
+    }
+
+    private @NotNull TextComponent createThirdLine(final @NotNull List<String> plugins) {
+        TextComponent msg = new TextComponent("- ");
+        msg.setColor(ChatColor.DARK_GRAY);
+
+        boolean isFirst = true;
+        for (var pluginName : plugins) {
+            if (!isFirst) {
+                TextComponent tmp = new TextComponent(", ");
+                msg.addExtra(tmp);
+            }
+
+            Plugin pl = Bukkit.getPluginManager().getPlugin(pluginName);
+            if (pl == null) {
+                continue;
+            }
+
+            TextComponent tmp = new TextComponent(pluginName);
+            tmp.setColor(pl.isEnabled() ? ChatColor.GREEN : ChatColor.RED);
+            tmp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/version " + pluginName));
+            msg.addExtra(tmp);
+
+            isFirst = false;
+        }
+
+        return msg;
+    }
+    // endregion
 }

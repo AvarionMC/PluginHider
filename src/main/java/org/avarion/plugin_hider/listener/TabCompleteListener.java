@@ -49,9 +49,7 @@ public class TabCompleteListener extends PacketAdapter {
         }
 
         List<Suggestion> suggestions = ((Suggestions) event.getPacket().getModifier().read(1)).getList();
-        List<String> plugins = suggestions.stream()
-                                          .map(Suggestion::getText)
-                                          .filter(text -> plugin.getMyConfig().shouldShow(text))
+        List<String> plugins = suggestions.stream().map(Suggestion::getText).filter(plugin.getMyConfig()::shouldShow)
                                           .toList();
 
         plugin.logger.debug("Filtered TabCompletion request: {0}", plugins);

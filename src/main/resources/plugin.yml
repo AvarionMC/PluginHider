@@ -1,10 +1,11 @@
-name: ${project.name}
+name: "${project.name}"
 description: ${project.description}
 version: ${project.version}
 main: org.avarion.plugin_hider.PluginHider
 api-version: 1.20
 author: svaningelgem
-load: POSTWORLD
+load: STARTUP
+website: https://github.com/AvarionMC/PluginHider
 
 depend:
   - ProtocolLib

@@ -38,7 +38,7 @@ public class PluginResponseListener extends PacketAdapter {
             return;
         }
 
-        plugin.cachedUsers.put(event.getPlayer().getUniqueId(), new ReceivedPackets(10));
+        plugin.cachedUsers.put(event.getPlayer().getUniqueId(), new ReceivedPackets(plugin.getMyConfig(), 10));
     }
 
     @Override
@@ -54,9 +54,9 @@ public class PluginResponseListener extends PacketAdapter {
 
         ReceivedPackets entry = plugin.cachedUsers.get(player);
 
-        // https://github.com/kangarko/Foundation/blob/master/src/main/java/org/mineacademy/fo/model/PacketListener.java#L307C26-L307C82
         String text = readChatMessage(event.getPacket());
         entry.addSystemChatLine(text);
+
         if (entry.amountOfPlugins == 0) {
             // No plugins...
             plugin.cachedUsers.remove(player);
@@ -67,8 +67,10 @@ public class PluginResponseListener extends PacketAdapter {
         event.setCancelled(true);
 
         if (entry.isFinished()) {
-            // Send messages if there is anything to send.
+            // Remove this from our cache, so we don't intercept it again
             plugin.cachedUsers.remove(player);
+            // Send messages if there is anything to send.
+            entry.sendModifiedMessage(event.getPlayer());
         }
     }
 
