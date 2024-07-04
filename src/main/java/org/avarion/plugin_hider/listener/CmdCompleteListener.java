@@ -38,6 +38,7 @@ public class CmdCompleteListener extends PacketAdapter {
         event.setPacket(new PacketContainer(PacketType.Play.Server.COMMANDS, modifyPacket(packet)));
     }
 
+    @SuppressWarnings("unchecked")
     private @NotNull Object modifyPacket(Object handle) {
         PacketPlayOutCommands cmds = (PacketPlayOutCommands) handle;
         RootCommandNode root = cmds.a(this.context);
