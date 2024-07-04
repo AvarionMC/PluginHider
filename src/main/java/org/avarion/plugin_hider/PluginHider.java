@@ -66,7 +66,7 @@ public class PluginHider extends JavaPlugin {
 
     //region <bstats>
     private void setupBStats() {
-        Metrics metrics = new Metrics(this, Constants.bstatsPluginId);
+        Metrics ignored = new Metrics(this, Constants.bstatsPluginId);
     }
     //endregion
 

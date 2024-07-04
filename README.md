@@ -34,3 +34,9 @@ However, if you want to show just 1 plugin, you can set `*` in the `hide_plugins
 If a plugin is hidden, should we also hide its commands? By default, this is true.
 
 The commands can still be executable, they're just not visible anymore.
+
+## Links
+
+- **Spigot**: https://www.spigotmc.org/resources/plugin-hider.117705/
+- **bStats**:https://bstats.org/plugin/bukkit/PluginHider/22462
+- **GitHub**: https://github.com/AvarionMC/graves
