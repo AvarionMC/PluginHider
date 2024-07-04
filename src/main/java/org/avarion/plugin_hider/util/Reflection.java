@@ -1,7 +1,5 @@
 package org.avarion.plugin_hider.util;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -26,7 +24,7 @@ public class Reflection {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T callStatic(@NonNull Method method, Object... params) {
+    public static <T> T callStatic(Method method, Object... params) {
         try {
             return (T) method.invoke(null, params);
         }

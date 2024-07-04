@@ -19,7 +19,7 @@ hide_hidden_plugin_commands: true
 
 ### `hide_plugins`
 
-Anything written in here will be hidden if it matches the name (case insensitive)
+Anything written in here will be hidden if it matches the name (case-insensitive)
 
 `*` can be used to denote *all* plugins.
 
@@ -31,6 +31,6 @@ However, if you want to show just 1 plugin, you can set `*` in the `hide_plugins
 
 ### `hide_hidden_plugin_commands`
 
-If a plugin is hidden, should we also hide its commands? By default this is true.
+If a plugin is hidden, should we also hide its commands? By default, this is true.
 
 The commands can still be executable, they're just not visible anymore.

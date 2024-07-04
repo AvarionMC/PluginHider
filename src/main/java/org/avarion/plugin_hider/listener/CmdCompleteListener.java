@@ -38,16 +38,15 @@ public class CmdCompleteListener extends PacketAdapter {
         event.setPacket(new PacketContainer(PacketType.Play.Server.COMMANDS, modifyPacket(packet)));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private @NotNull Object modifyPacket(Object handle) {
         PacketPlayOutCommands cmds = (PacketPlayOutCommands) handle;
         RootCommandNode root = cmds.a(this.context);
 
         // region <Building up a map between plugin name -> commands>
         Map<String, List<String>> plugin2cmd = new HashMap<>();
-        var it = root.getChildren().iterator();
-        while (it.hasNext()) {
-            CommandNode child = (CommandNode) it.next();
+        for (Object o : root.getChildren()) {
+            CommandNode child = (CommandNode) o;
             String[] parts = child.getName().split(":", 2);
             if (parts.length == 2 && !plugin.getMyConfig().shouldShow(parts[0])) {
                 plugin2cmd.computeIfAbsent(parts[0], k -> new ArrayList<>()).add(parts[1]);

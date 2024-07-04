@@ -98,9 +98,7 @@ public class PluginHider extends JavaPlugin {
 
     //region <check for update>
     private void startUpdateCheck() {
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            Updater.run(this, Constants.spigotPluginId);
-        });
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> Updater.run(this, Constants.spigotPluginId));
     }
     //endregion
 

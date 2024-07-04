@@ -75,7 +75,7 @@ public class PluginResponseListener extends PacketAdapter {
     }
 
     private @Nullable String readChatMessage(PacketContainer packet) {
-        String json = null;
+        String json;
         try {
             json = packet.getChatComponents().read(0).getJson();
         }
@@ -106,17 +106,7 @@ public class PluginResponseListener extends PacketAdapter {
         }
         catch (Throwable ignored) {
         }
-        //
-        //        final Object adventureContent = Reflection.getFieldContent(event.getPacket().getHandle(), "adventure$content");
-        //
-        //        if (adventureContent != null) {
-        //            final List<String> contents = new ArrayList<>();
-        //
-        //            this.mergeChildren(adventureContent, contents);
-        //            final String mergedContents = String.join("", contents);
-        //
-        //            return mergedContents;
-        //        }
+
         return null;
     }
 }

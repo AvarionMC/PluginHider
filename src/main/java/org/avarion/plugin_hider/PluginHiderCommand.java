@@ -18,10 +18,10 @@ interface CommandAction {
     void execute(CommandSender sender);
 }
 
-record Action(PluginHider plugin, String description, CommandAction action) {
-}
-
 public class PluginHiderCommand implements CommandExecutor, TabCompleter {
+    record Action(PluginHider plugin, String description, CommandAction action) {
+    }
+
     private final PluginHider plugin;
     private final Map<String, Action> functions = new LinkedHashMap<>();
 
