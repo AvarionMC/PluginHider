@@ -107,9 +107,9 @@ public class PluginHider extends JavaPlugin {
     }
 
     private void addCommands() {
-        PluginCommand cmd = getCommand("pluginhide");
+        PluginCommand cmd = getCommand("pluginhider");
         if (cmd == null) {
-            logger.error("Cannot find the pluginhide command??");
+            logger.error("Cannot find the pluginhider command??");
             getPluginLoader().disablePlugin(this);
             return;
         }

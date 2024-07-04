@@ -11,7 +11,7 @@ depend:
   - ProtocolLib
 
 commands:
-  pluginhide:
+  pluginhider:
     description: Reloads the PluginHiders configuration
-    usage: /pluginhide reload
+    usage: /pluginhider reload
     aliases: [ph]

@@ -1,6 +1,8 @@
 package org.avarion.plugin_hider;
 
-import org.avarion.plugin_hider.util.SendCmd;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -19,12 +21,8 @@ interface CommandAction {
 }
 
 public class PluginHiderCommand implements CommandExecutor, TabCompleter {
-    record Action(PluginHider plugin, String description, CommandAction action) {
-    }
-
     private final PluginHider plugin;
     private final Map<String, Action> functions = new LinkedHashMap<>();
-
     public PluginHiderCommand(PluginHider plugin) {
         this.plugin = plugin;
 
@@ -35,7 +33,8 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String[] args) {
         if (!commandSender.isOp()) {
-            return false;
+            commandSender.sendMessage("Unknown command. Type \"/help\" for help.");
+            return true;
         }
 
         if (args.length == 0) {
@@ -64,18 +63,29 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
         showHelp(commandSender, true, "");
     }
 
-    private void showHelp(CommandSender commandSender, boolean showVersion, String showError) {
+    private void showHelp(@NotNull CommandSender commandSender, boolean showVersion, String showError) {
+        var send_to = commandSender.spigot();
         if (showVersion) {
-            SendCmd.sendMessage(commandSender, "Version: " + plugin.currentVersion);
+            send_to.sendMessage(new TextComponent("Version: " + plugin.currentVersion));
         }
 
-        if (showError.isEmpty()) {
-            SendCmd.sendMessage(commandSender, showError);
+        if (!showError.isEmpty()) {
+            send_to.sendMessage(new TextComponent(showError));
         }
 
-        SendCmd.sendMessage(commandSender, "Available actions:");
+        send_to.sendMessage(new TextComponent("Available actions:"));
         for (var entry : functions.entrySet()) {
-            SendCmd.sendMessage(commandSender, "/pluginhide " + entry.getKey() + ": " + entry.getValue().description());
+            String doThis = "/pluginhider " + entry.getKey();
+
+            TextComponent txt = new TextComponent(doThis);
+            txt.setColor(ChatColor.GREEN);
+            txt.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, doThis));
+
+            TextComponent extra = new TextComponent(": " + entry.getValue().description());
+            extra.setColor(ChatColor.WHITE);
+            txt.addExtra(extra);
+
+            commandSender.spigot().sendMessage(txt);
         }
     }
 
@@ -103,5 +113,8 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
         }
 
         return tmp;
+    }
+
+    record Action(PluginHider plugin, String description, CommandAction action) {
     }
 }
