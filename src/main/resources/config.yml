@@ -60,3 +60,5 @@ hide_plugins:
 
 show_plugins:
   - '*'
+
+hide_hidden_plugin_commands: true  # Should we attempt to hide the commands of the hidden plugins?

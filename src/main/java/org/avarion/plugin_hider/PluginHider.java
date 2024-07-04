@@ -2,6 +2,7 @@ package org.avarion.plugin_hider;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import org.avarion.plugin_hider.listener.CmdCompleteListener;
 import org.avarion.plugin_hider.listener.PluginCommandListener;
 import org.avarion.plugin_hider.listener.PluginResponseListener;
 import org.avarion.plugin_hider.listener.TabCompleteListener;
@@ -81,6 +82,10 @@ public class PluginHider extends JavaPlugin {
         protocolManager = ProtocolLibrary.getProtocolManager();
         protocolManager.addPacketListener(new PluginResponseListener(this));
         protocolManager.addPacketListener(new TabCompleteListener(this));
+
+        if (config.hideHiddenPluginCommands) {
+            protocolManager.addPacketListener(new CmdCompleteListener(this));
+        }
     }
 
     private void disableProtocolLib() {
