@@ -3,6 +3,10 @@
 Hide your minecraft plugins from prying eyes. The commands can still be executed, but it doesn't show up in the tab completion
 list. Nor when you issue the `/version <plugin name>` command. Not when you issue the `/plugins` command.
 
+## Required:
+
+! [***ProtocolLib 5+***](https://www.spigotmc.org/resources/protocollib.1997/) !
+
 ## Configuration
 
 Configuration is relatively simple:
@@ -35,12 +39,16 @@ If a plugin is hidden, should we also hide its commands? By default, this is tru
 
 The commands can still be executable, they're just not visible anymore.
 
+## Showcase
+
+![Short explanation](docs/short_explanation.png)
+
+## Usage
+
+![Server usage](https://bstats.org/signatures/bukkit/PluginHider.svg)
+
 ## Links
 
 - **Spigot**: https://www.spigotmc.org/resources/plugin-hider.117705/
 - **bStats**:https://bstats.org/plugin/bukkit/PluginHider/22462
 - **GitHub**: https://github.com/AvarionMC/PluginHider
-
-_Necessary requirement:_
-
-- **ProtocolLib**: https://www.spigotmc.org/resources/protocollib.1997/
