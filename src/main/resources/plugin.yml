@@ -1,0 +1,17 @@
+name: "${project.name}"
+description: ${project.description}
+version: ${project.version}
+main: org.avarion.pluginhider.PluginHider
+api-version: "1.20"
+author: svaningelgem
+load: STARTUP
+website: https://github.com/AvarionMC/PluginHider
+
+depend:
+  - ProtocolLib
+
+commands:
+  pluginhider:
+    description: Reloads the PluginHiders configuration
+    usage: /pluginhider reload
+    aliases: [ph]
