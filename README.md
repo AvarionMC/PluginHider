@@ -39,4 +39,8 @@ The commands can still be executable, they're just not visible anymore.
 
 - **Spigot**: https://www.spigotmc.org/resources/plugin-hider.117705/
 - **bStats**:https://bstats.org/plugin/bukkit/PluginHider/22462
-- **GitHub**: https://github.com/AvarionMC/graves
+- **GitHub**: https://github.com/AvarionMC/PluginHider
+
+_Necessary requirement:_
+
+- **ProtocolLib**: https://www.spigotmc.org/resources/protocollib.1997/
