@@ -10,12 +10,6 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class PluginCommandListener implements Listener {
-    final private PluginHider plugin;
-
-    public PluginCommandListener(PluginHider plugin) {
-        this.plugin = plugin;
-    }
-
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().split("\\s+");
@@ -33,7 +27,7 @@ public class PluginCommandListener implements Listener {
         }
 
         String pluginName = args[1].trim();
-        if (!plugin.getMyConfig().shouldShow(pluginName)) {
+        if (!PluginHider.inst.getMyConfig().shouldShow(pluginName)) {
             Player player = event.getPlayer();
             // default message from spigot when a plugin isn't found.
             player.sendMessage("This server is not running any plugin by that name.");

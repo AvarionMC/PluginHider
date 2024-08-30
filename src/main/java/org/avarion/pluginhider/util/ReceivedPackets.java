@@ -157,12 +157,9 @@ public class ReceivedPackets {
             }
 
             Plugin pl = Bukkit.getPluginManager().getPlugin(pluginName);
-            if (pl == null) {
-                continue;
-            }
 
             TextComponent tmp = new TextComponent(pluginName);
-            tmp.setColor(pl.isEnabled() ? ChatColor.GREEN : ChatColor.RED);
+            tmp.setColor(pl!=null && pl.isEnabled() ? ChatColor.GREEN : ChatColor.RED);
             tmp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/version " + pluginName));
             msg.addExtra(tmp);
 

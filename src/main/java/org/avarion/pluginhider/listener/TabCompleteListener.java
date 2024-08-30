@@ -17,13 +17,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class TabCompleteListener extends PacketAdapter {
-    final private PluginHider plugin;
     final private Map<UUID, String> latestTabCompletion = new LRUCache<>(1000);
 
-    public TabCompleteListener(PluginHider plugin) {
-        super(plugin, ListenerPriority.HIGHEST, Arrays.asList(PacketType.Play.Server.TAB_COMPLETE, PacketType.Play.Client.TAB_COMPLETE), ListenerOptions.ASYNC);
-
-        this.plugin = plugin;
+    public TabCompleteListener() {
+        super(PluginHider.inst, ListenerPriority.HIGHEST, Arrays.asList(PacketType.Play.Server.TAB_COMPLETE, PacketType.Play.Client.TAB_COMPLETE), ListenerOptions.ASYNC);
     }
 
     @Override
@@ -35,7 +32,7 @@ public class TabCompleteListener extends PacketAdapter {
         final String cmd = event.getPacket().getModifier().read(1).toString().toLowerCase();
         latestTabCompletion.put(event.getPlayer().getUniqueId(), cmd);
 
-        plugin.logger.debug("Incoming TabCompletion request: {0}", cmd);
+        PluginHider.logger.debug("Incoming TabCompletion request: {0}", cmd);
     }
 
     public void onPacketSending(PacketEvent event) {
@@ -49,10 +46,10 @@ public class TabCompleteListener extends PacketAdapter {
         }
 
         List<Suggestion> suggestions = ((Suggestions) event.getPacket().getModifier().read(1)).getList();
-        List<String> plugins = suggestions.stream().map(Suggestion::getText).filter(plugin.getMyConfig()::shouldShow)
+        List<String> plugins = suggestions.stream().map(Suggestion::getText).filter(PluginHider.config::shouldShow)
                                           .toList();
 
-        plugin.logger.debug("Filtered TabCompletion request: {0}", plugins);
+        PluginHider.logger.debug("Filtered TabCompletion request: {0}", plugins);
 
         if (suggestions.size() == plugins.size()) {
             return; // Nothing removed

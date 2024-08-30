@@ -2,27 +2,25 @@ package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Config {
-    private final PluginHider plugin;
     private final List<String> hiddenPlugins = new ArrayList<>();
     private final List<String> shownPlugins = new ArrayList<>();
     public boolean hideHiddenPluginCommands = true;
     private FileConfiguration config;
     private boolean hideAll = false;
 
-    public Config(PluginHider plugin) {
-        this.plugin = plugin;
-
-        plugin.saveDefaultConfig();
+    public Config() {
+        PluginHider.inst.saveDefaultConfig();
         reload();
     }
 
-    private void update(List<String> target, String source, List<String> def) {
+    private void update(@NotNull List<String> target, String source, List<String> def) {
         target.clear();
 
         if (!config.contains(source)) {
@@ -34,8 +32,8 @@ public class Config {
     }
 
     public void reload() {
-        plugin.reloadConfig();
-        config = plugin.getConfig();
+        PluginHider.inst.reloadConfig();
+        config = PluginHider.inst.getConfig();
 
         update(hiddenPlugins, "hide_plugins", Collections.emptyList());
         update(shownPlugins, "show_plugins", Collections.singletonList("*"));

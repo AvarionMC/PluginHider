@@ -19,12 +19,8 @@ import java.util.Arrays;
 import java.util.UUID;
 
 public class PluginResponseListener extends PacketAdapter {
-    final private PluginHider plugin;
-
-    public PluginResponseListener(PluginHider plugin) {
-        super(plugin, ListenerPriority.HIGHEST, Arrays.asList(PacketType.Play.Server.SYSTEM_CHAT, PacketType.Play.Client.CHAT_COMMAND));
-
-        this.plugin = plugin;
+    public PluginResponseListener() {
+        super(PluginHider.inst, ListenerPriority.HIGHEST, Arrays.asList(PacketType.Play.Server.SYSTEM_CHAT, PacketType.Play.Client.CHAT_COMMAND));
     }
 
     @Override
@@ -38,7 +34,7 @@ public class PluginResponseListener extends PacketAdapter {
             return;
         }
 
-        plugin.cachedUsers.put(event.getPlayer().getUniqueId(), new ReceivedPackets(plugin.getMyConfig(), 10));
+        PluginHider.inst.cachedUsers.put(event.getPlayer().getUniqueId(), new ReceivedPackets(PluginHider.config, 10));
     }
 
     @Override
@@ -48,18 +44,18 @@ public class PluginResponseListener extends PacketAdapter {
         }
 
         UUID player = event.getPlayer().getUniqueId();
-        if (!plugin.cachedUsers.containsKey(player)) {
+        if (!PluginHider.inst.cachedUsers.containsKey(player)) {
             return;
         }
 
-        ReceivedPackets entry = plugin.cachedUsers.get(player);
+        ReceivedPackets entry = PluginHider.inst.cachedUsers.get(player);
 
         String text = readChatMessage(event.getPacket());
         entry.addSystemChatLine(text);
 
         if (entry.amountOfPlugins == 0) {
             // No plugins...
-            plugin.cachedUsers.remove(player);
+            PluginHider.inst.cachedUsers.remove(player);
             return;
         }
 
@@ -68,7 +64,7 @@ public class PluginResponseListener extends PacketAdapter {
 
         if (entry.isFinished()) {
             // Remove this from our cache, so we don't intercept it again
-            plugin.cachedUsers.remove(player);
+            PluginHider.inst.cachedUsers.remove(player);
             // Send messages if there is anything to send.
             entry.sendModifiedMessage(event.getPlayer());
         }

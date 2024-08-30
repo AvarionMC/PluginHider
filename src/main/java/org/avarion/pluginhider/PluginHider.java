@@ -16,14 +16,18 @@ import java.util.UUID;
 
 
 public class PluginHider extends JavaPlugin {
+    public static PluginHider inst;
+    public static Logger logger = null;
+    public static Config config = null;
+
     public final Version currentVersion = new Version(getDescription().getVersion());
     public final LRUCache<UUID, ReceivedPackets> cachedUsers = new LRUCache<>(1000);
-    public Logger logger = null;
-    private Config config = null;
     private ProtocolManager protocolManager = null;
 
     @Override
     public void onEnable() {
+        inst = this;
+
         setupLogger();
         setupBStats();
         setupConfig();
@@ -46,7 +50,7 @@ public class PluginHider extends JavaPlugin {
 
     //region <Config>
     private void setupConfig() {
-        config = new Config(this);
+        config = new Config();
     }
 
     private void disableConfig() {
@@ -80,11 +84,11 @@ public class PluginHider extends JavaPlugin {
         }
 
         protocolManager = ProtocolLibrary.getProtocolManager();
-        protocolManager.addPacketListener(new PluginResponseListener(this));
-        protocolManager.addPacketListener(new TabCompleteListener(this));
+        protocolManager.addPacketListener(new PluginResponseListener());
+        protocolManager.addPacketListener(new TabCompleteListener());
 
         if (config.hideHiddenPluginCommands) {
-            protocolManager.addPacketListener(new CmdCompleteListener(this));
+            protocolManager.addPacketListener(new CmdCompleteListener());
         }
     }
 
@@ -103,7 +107,7 @@ public class PluginHider extends JavaPlugin {
     //endregion
 
     private void addListeners() {
-        Bukkit.getPluginManager().registerEvents(new PluginCommandListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new PluginCommandListener(), this);
     }
 
     private void addCommands() {
@@ -114,7 +118,7 @@ public class PluginHider extends JavaPlugin {
             return;
         }
 
-        cmd.setExecutor(new PluginHiderCommand(this));
-        cmd.setTabCompleter(new PluginHiderCommand(this));
+        cmd.setExecutor(new PluginHiderCommand());
+        cmd.setTabCompleter(new PluginHiderCommand());
     }
 }

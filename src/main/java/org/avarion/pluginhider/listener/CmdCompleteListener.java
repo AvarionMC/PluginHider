@@ -16,20 +16,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class CmdCompleteListener extends PacketAdapter {
-    private final PluginHider plugin;
     private final CommandBuildContext context = CommandDispatcher.a(VanillaRegistries.a());
 
-    public CmdCompleteListener(@NotNull PluginHider plugin) {
-        super(plugin, ListenerPriority.HIGH, Collections.singletonList(PacketType.Play.Server.COMMANDS), ListenerOptions.ASYNC);
-
-        this.plugin = plugin;
+    public CmdCompleteListener() {
+        super(PluginHider.inst, ListenerPriority.HIGH, Collections.singletonList(PacketType.Play.Server.COMMANDS), ListenerOptions.ASYNC);
     }
 
     @Override
     public void onPacketSending(@NotNull PacketEvent event) {
         Player player = event.getPlayer();
         if (player == null || player instanceof TemporaryPlayer) {
-            plugin.logger.warning("null/temporary player found!");
+            PluginHider.logger.warning("null/temporary player found!");
             event.setCancelled(true);
             return;
         }
@@ -48,7 +45,7 @@ public class CmdCompleteListener extends PacketAdapter {
         for (Object o : root.getChildren()) {
             CommandNode child = (CommandNode) o;
             String[] parts = child.getName().split(":", 2);
-            if (parts.length == 2 && !plugin.getMyConfig().shouldShow(parts[0])) {
+            if (parts.length == 2 && !PluginHider.inst.getMyConfig().shouldShow(parts[0])) {
                 plugin2cmd.computeIfAbsent(parts[0], k -> new ArrayList<>()).add(parts[1]);
             }
         }
