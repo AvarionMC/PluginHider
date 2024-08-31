@@ -7,11 +7,11 @@ import java.util.Locale;
 import java.util.Set;
 
 public class Constants {
-    final public static int bstatsPluginId = 22462;
-    final public static int spigotPluginId = 117705;
+    public static final int bstatsPluginId = 22462;
+    public static final int spigotPluginId = 117705;
 
-    final private static Set<String> possiblePluginCommands = Set.of("/pl", "/plugins", "/minecraft:pl", "/minecraft:plugins", "/bukkit:pl", "/bukkit:plugins");
-    final private static Set<String> possibleVersionCommands = Set.of("/ver", "/version", "/about", "/minecraft:ver", "/minecraft:version", "/minecraft:about", "/bukkit:ver", "/bukkit:version", "/bukkit:about");
+    private static final Set<String> possiblePluginCommands = Set.of("/pl", "/plugins", "/minecraft:pl", "/minecraft:plugins", "/bukkit:pl", "/bukkit:plugins");
+    private static final Set<String> possibleVersionCommands = Set.of("/ver", "/version", "/about", "/minecraft:ver", "/minecraft:version", "/minecraft:about", "/bukkit:ver", "/bukkit:version", "/bukkit:about");
 
     private static @NotNull String cleanup(@NotNull final String cmd) {
         String[] args = cmd.trim().split("\\s+");

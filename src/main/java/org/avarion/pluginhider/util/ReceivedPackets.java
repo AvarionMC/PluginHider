@@ -29,9 +29,8 @@ public class ReceivedPackets {
         if (lineCounter==1) {
             interpretAmountOfPlugins(line);
         } else if (lineCounter==2) {
-            assert line.endsWith(":");
-        }
-        else {
+            if (!line.endsWith(":")) throw new RuntimeException("Invalid 'Bukkit' line: " + line);
+        } else {
             interpretPluginLine(line);
         }
     }
@@ -54,7 +53,7 @@ public class ReceivedPackets {
     }
 
     public boolean isFinished() {
-        return amountOfPlugins != null && pluginsSeen.size() >= amountOfPlugins;
+        return amountOfPlugins!=null && pluginsSeen.size() >= amountOfPlugins;
     }
 
     // region <Message sending>
