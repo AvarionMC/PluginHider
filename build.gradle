@@ -32,7 +32,7 @@ repositories {
 dependencies {
     implementation "org.bstats:bstats-bukkit:3.0.3"
     implementation "org.jetbrains:annotations:24.1.0"
-    compileOnly "org.spigotmc:spigot-api:1.16.1-R0.1-SNAPSHOT"
+    compileOnly "org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT"
     // 1.10-1.11: no .spigot() on commandSender
     // 1.12-1.15: has no HTML colors
     compileOnly "com.github.retrooper:packetevents-spigot:2.4.0"
