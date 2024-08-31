@@ -21,13 +21,11 @@ interface CommandAction {
 }
 
 public class PluginHiderCommand implements CommandExecutor, TabCompleter {
-    private final PluginHider plugin;
     private final Map<String, Action> functions = new LinkedHashMap<>();
-    public PluginHiderCommand(PluginHider plugin) {
-        this.plugin = plugin;
 
-        functions.put("reload", new Action(plugin, "reload the configuration", this::reloadConfiguration));
-        functions.put("help", new Action(plugin, "shows this help", this::showHelp));
+    public PluginHiderCommand() {
+        functions.put("reload", new Action("reload the configuration", this::reloadConfiguration));
+        functions.put("help", new Action("shows this help", this::showHelp));
     }
 
     @Override
@@ -37,7 +35,7 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length == 0) {
+        if (args.length==0) {
             showHelp(commandSender);
             return true;
         }
@@ -52,10 +50,10 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
     }
 
     private void reloadConfiguration(CommandSender player) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.getMyConfig().reload();
+        Bukkit.getScheduler().runTaskAsynchronously(PluginHider.inst, () -> {
+            PluginHider.config.reload();
             player.sendMessage("Reloaded the configuration.");
-            plugin.logger.info("Reloaded the configuration.");
+            PluginHider.logger.info("Reloaded the configuration.");
         });
     }
 
@@ -66,7 +64,7 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
     private void showHelp(@NotNull CommandSender commandSender, boolean showVersion, String showError) {
         var send_to = commandSender.spigot();
         if (showVersion) {
-            send_to.sendMessage(new TextComponent("Version: " + plugin.currentVersion));
+            send_to.sendMessage(new TextComponent("Version: " + PluginHider.inst.currentVersion));
         }
 
         if (!showError.isEmpty()) {
@@ -91,7 +89,7 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String[] args) {
-        if (args.length != 1) {
+        if (args.length!=1) {
             return null;
         }
 
@@ -115,6 +113,6 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
         return tmp;
     }
 
-    record Action(PluginHider plugin, String description, CommandAction action) {
+    record Action(String description, CommandAction action) {
     }
 }
