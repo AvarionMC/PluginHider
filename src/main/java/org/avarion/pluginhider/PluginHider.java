@@ -11,7 +11,6 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 
 public class PluginHider extends JavaPlugin {
@@ -37,14 +36,6 @@ public class PluginHider extends JavaPlugin {
 
         addListeners();
         addCommands();
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!isCancelled() && setupPacketEvents())
-                    cancel();
-            }
-        }.runTaskTimerAsynchronously(this, 1, 1);
-
         setupPacketEvents();
 
         logger.info("Loaded version: " + currentVersion);
@@ -80,24 +71,15 @@ public class PluginHider extends JavaPlugin {
     //endregion
 
     //region <PacketEvents>
-    private boolean setupPacketEvents() {
-        var plugin = getServer().getPluginManager().getPlugin("packetevents");
-        var isEnabled = plugin!=null && plugin.isEnabled();
-        if (!isEnabled) {
-            return false;
-        }
-
-
+    private void setupPacketEvents() {
         PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
-        PacketEvents.getAPI().init();
+//        PacketEvents.getAPI().init();
 
         PacketEvents.getAPI().getEventManager().registerListeners(
                 new DeclareCommandsListener(),
                 new PluginCommandListener(),
                 new VersionCommandListener()
         );
-
-        return true;
     }
 
     private void disableProtocolLib() {
