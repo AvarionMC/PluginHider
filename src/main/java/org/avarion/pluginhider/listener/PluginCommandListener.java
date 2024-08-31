@@ -1,3 +1,4 @@
+/*
 package org.avarion.pluginhider.listener;
 
 import org.avarion.pluginhider.PluginHider;
@@ -27,7 +28,7 @@ public class PluginCommandListener implements Listener {
         }
 
         String pluginName = args[1].trim();
-        if (!PluginHider.inst.getMyConfig().shouldShow(pluginName)) {
+        if (!PluginHider.config.shouldShow(pluginName)) {
             Player player = event.getPlayer();
             // default message from spigot when a plugin isn't found.
             player.sendMessage("This server is not running any plugin by that name.");
@@ -37,3 +38,4 @@ public class PluginCommandListener implements Listener {
         }
     }
 }
+*/

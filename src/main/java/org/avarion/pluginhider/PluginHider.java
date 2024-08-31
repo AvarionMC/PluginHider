@@ -1,10 +1,8 @@
 package org.avarion.pluginhider;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import org.avarion.pluginhider.listener.CmdCompleteListener;
-import org.avarion.pluginhider.listener.PluginCommandListener;
-import org.avarion.pluginhider.listener.PluginResponseListener;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.util.TimeStampMode;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.avarion.pluginhider.listener.TabCompleteListener;
 import org.avarion.pluginhider.util.*;
 import org.bstats.bukkit.Metrics;
@@ -22,7 +20,6 @@ public class PluginHider extends JavaPlugin {
 
     public final Version currentVersion = new Version(getDescription().getVersion());
     public final LRUCache<UUID, ReceivedPackets> cachedUsers = new LRUCache<>(1000);
-    private ProtocolManager protocolManager = null;
 
     @Override
     public void onEnable() {
@@ -34,7 +31,7 @@ public class PluginHider extends JavaPlugin {
 
         addListeners();
         addCommands();
-        setupProtocolLib();
+        setupPacketEvents();
 
         logger.info("Loaded version: " + currentVersion);
         startUpdateCheck();
@@ -74,28 +71,21 @@ public class PluginHider extends JavaPlugin {
     }
     //endregion
 
-    //region <ProtocolLibrary>
-    private void setupProtocolLib() {
-        Version protocolVersion = new Version(ProtocolLibrary.getPlugin().getDescription().getVersion());
-        if (protocolVersion.major < 5) {
-            logger.error("ProtocolLib 5 or higher is needed. You have: " + protocolVersion);
-            getPluginLoader().disablePlugin(this);
-            return;
-        }
+    //region <PacketEvents>
+    private void setupPacketEvents() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(PluginHider.inst));
 
-        protocolManager = ProtocolLibrary.getProtocolManager();
-        protocolManager.addPacketListener(new PluginResponseListener());
-        protocolManager.addPacketListener(new TabCompleteListener());
+        PacketEvents.getAPI().load();
+        PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
+        PacketEvents.getAPI().init();
 
-        if (config.hideHiddenPluginCommands) {
-            protocolManager.addPacketListener(new CmdCompleteListener());
-        }
+        PacketEvents.getAPI().getEventManager().registerListener(new TabCompleteListener());
     }
 
     private void disableProtocolLib() {
-        if (protocolManager != null) {
-            protocolManager.removePacketListeners(this);
-            protocolManager = null;
+        var theAPI = PacketEvents.getAPI();
+        if (theAPI!=null) {
+            theAPI.terminate();
         }
     }
     //endregion
@@ -107,7 +97,7 @@ public class PluginHider extends JavaPlugin {
     //endregion
 
     private void addListeners() {
-        Bukkit.getPluginManager().registerEvents(new PluginCommandListener(), this);
+//        Bukkit.getPluginManager().registerEvents(new PluginCommandListener(), this);
     }
 
     private void addCommands() {

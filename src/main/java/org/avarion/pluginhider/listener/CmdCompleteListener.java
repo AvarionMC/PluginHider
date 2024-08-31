@@ -1,8 +1,6 @@
+/*
 package org.avarion.pluginhider.listener;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.*;
-import com.comphenix.protocol.injector.temporary.TemporaryPlayer;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import net.minecraft.commands.CommandBuildContext;
@@ -45,7 +43,7 @@ public class CmdCompleteListener extends PacketAdapter {
         for (Object o : root.getChildren()) {
             CommandNode child = (CommandNode) o;
             String[] parts = child.getName().split(":", 2);
-            if (parts.length == 2 && !PluginHider.inst.getMyConfig().shouldShow(parts[0])) {
+            if (parts.length == 2 && !PluginHider.config.shouldShow(parts[0])) {
                 plugin2cmd.computeIfAbsent(parts[0], k -> new ArrayList<>()).add(parts[1]);
             }
         }
@@ -59,3 +57,4 @@ public class CmdCompleteListener extends PacketAdapter {
         return new PacketPlayOutCommands(root);
     }
 }
+*/

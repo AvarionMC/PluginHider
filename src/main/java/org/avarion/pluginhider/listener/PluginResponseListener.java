@@ -1,3 +1,4 @@
+/*
 package org.avarion.pluginhider.listener;
 
 import com.comphenix.protocol.PacketType;
@@ -106,3 +107,4 @@ public class PluginResponseListener extends PacketAdapter {
         return null;
     }
 }
+*/
