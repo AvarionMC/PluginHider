@@ -3,10 +3,9 @@ package org.avarion.pluginhider.util;
 import org.avarion.pluginhider.PluginHider;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Config {
     private final List<String> hiddenPlugins = new ArrayList<>();
@@ -15,6 +14,12 @@ public class Config {
     public boolean shouldAllowConolOnTabComplete = false;
     private FileConfiguration config;
     private boolean hideAll = false;
+    private final Map<String, Boolean> showCache = new LinkedHashMap<>(1000, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
+            return size() > 1000;
+        }
+    };
 
     public Config() {
         reload();
@@ -44,14 +49,18 @@ public class Config {
         shouldAllowConolOnTabComplete = config.getBoolean("should_allow_colon_tabcompletion", false);
     }
 
-    public boolean shouldShow(String pluginName) {
-        pluginName = pluginName.toLowerCase();
-        if (shownPlugins.contains(pluginName)) {
-            return true; // explicitly shown
-        }
-        if (hiddenPlugins.contains(pluginName)) {
-            return false; // explicitly hidden
-        }
-        return !hideAll; // if all plugins are hidden
+    public boolean shouldShow(@Nullable final String pluginName) {
+        return showCache.computeIfAbsent(pluginName, k -> {
+            if (k==null) return false;
+
+            String[] parts = k.toLowerCase().trim().split("\\s+", 2);
+            if (shownPlugins.contains(parts[0])) {
+                return true; // explicitly shown
+            }
+            if (hiddenPlugins.contains(parts[0])) {
+                return false; // explicitly hidden
+            }
+            return !hideAll; // if all plugins are hidden;
+        });
     }
 }

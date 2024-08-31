@@ -5,7 +5,7 @@ list. Nor when you issue the `/version <plugin name>` command. Not when you issu
 
 ## Required:
 
-! [***ProtocolLib 5+***](https://www.spigotmc.org/resources/protocollib.1997/) !
+! [***PacketEvents v2.4.0+***](https://www.spigotmc.org/resources/packetevents-api.80279/) !
 
 ## Configuration
 

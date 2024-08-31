@@ -33,12 +33,8 @@ public class PluginCommandListener extends PacketListenerAbstract {
         } else if (event.getPacketType()==Client.CHAT_COMMAND_UNSIGNED) {
             cmd = "/" + new WrapperPlayClientChatCommandUnsigned(event).getCommand();
         }
-        if (cmd==null) return;
 
-        String[] args = cmd.split("\\s+");
-
-        String firstArg = args[0].toLowerCase();
-        if (Constants.isPluginCmd(firstArg)) {
+        if (Constants.isPluginCmd(cmd)) {
             usersSeen.put(player.getUniqueId(), new ReceivedPackets());
         }
     }

@@ -1,8 +1,8 @@
 package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;

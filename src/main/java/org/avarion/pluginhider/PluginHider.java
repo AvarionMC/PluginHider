@@ -5,19 +5,27 @@ import com.github.retrooper.packetevents.util.TimeStampMode;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.avarion.pluginhider.listener.DeclareCommandsListener;
 import org.avarion.pluginhider.listener.PluginCommandListener;
+import org.avarion.pluginhider.listener.VersionCommandListener;
 import org.avarion.pluginhider.util.*;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 
 public class PluginHider extends JavaPlugin {
-    public static PluginHider inst;
+    public static PluginHider inst = null;
     public static Logger logger = null;
     public static Config config = null;
 
     public final Version currentVersion = new Version(getDescription().getVersion());
+
+    @Override
+    public void onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().load();
+    }
 
     @Override
     public void onEnable() {
@@ -29,6 +37,14 @@ public class PluginHider extends JavaPlugin {
 
         addListeners();
         addCommands();
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!isCancelled() && setupPacketEvents())
+                    cancel();
+            }
+        }.runTaskTimerAsynchronously(this, 1, 1);
+
         setupPacketEvents();
 
         logger.info("Loaded version: " + currentVersion);
@@ -64,15 +80,24 @@ public class PluginHider extends JavaPlugin {
     //endregion
 
     //region <PacketEvents>
-    private void setupPacketEvents() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(PluginHider.inst));
+    private boolean setupPacketEvents() {
+        var plugin = getServer().getPluginManager().getPlugin("packetevents");
+        var isEnabled = plugin!=null && plugin.isEnabled();
+        if (!isEnabled) {
+            return false;
+        }
 
-        PacketEvents.getAPI().load();
+
         PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
         PacketEvents.getAPI().init();
 
-        PacketEvents.getAPI().getEventManager().registerListener(new DeclareCommandsListener());
-        PacketEvents.getAPI().getEventManager().registerListener(new PluginCommandListener());
+        PacketEvents.getAPI().getEventManager().registerListeners(
+                new DeclareCommandsListener(),
+                new PluginCommandListener(),
+                new VersionCommandListener()
+        );
+
+        return true;
     }
 
     private void disableProtocolLib() {
@@ -90,12 +115,12 @@ public class PluginHider extends JavaPlugin {
     //endregion
 
     private void addListeners() {
-//        Bukkit.getPluginManager().registerEvents(new PluginCommandListener(), this);
+        Bukkit.getPluginManager().registerEvents(new VersionCommandListener(), this);
     }
 
     private void addCommands() {
         PluginCommand cmd = getCommand("pluginhider");
-        if (cmd == null) {
+        if (cmd==null) {
             logger.error("Cannot find the pluginhider command??");
             getPluginLoader().disablePlugin(this);
             return;

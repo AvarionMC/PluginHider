@@ -57,6 +57,7 @@
 hide_plugins:
   - PluginHider
   - ProtocolLib
+  - packetevents
 
 show_plugins:
   - '*'

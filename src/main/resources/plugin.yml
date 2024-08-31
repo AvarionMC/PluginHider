@@ -2,13 +2,13 @@ name: "${project.name}"
 description: ${project.description}
 version: ${project.version}
 main: org.avarion.pluginhider.PluginHider
-api-version: "1.20"
+api-version: "1.16"
 author: svaningelgem
 load: STARTUP
 website: https://github.com/AvarionMC/PluginHider
 
 depend:
-  - ProtocolLib
+  - packetevents
 
 commands:
   pluginhider:
