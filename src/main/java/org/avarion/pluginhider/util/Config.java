@@ -10,7 +10,6 @@ import java.util.*;
 public class Config {
     private final List<String> hiddenPlugins = new ArrayList<>();
     private final List<String> shownPlugins = new ArrayList<>();
-    public boolean hideHiddenPluginCommands = true;
     public boolean shouldAllowConolOnTabComplete = false;
     private FileConfiguration config;
     private boolean hideAll = false;
@@ -45,7 +44,6 @@ public class Config {
         update(shownPlugins, "show_plugins", Collections.singletonList("*"));
 
         hideAll = hiddenPlugins.contains("*");
-        hideHiddenPluginCommands = config.getBoolean("hide_hidden_plugin_commands", true);
         shouldAllowConolOnTabComplete = config.getBoolean("should_allow_colon_tabcompletion", false);
     }
 

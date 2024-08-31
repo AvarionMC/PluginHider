@@ -11,15 +11,15 @@ import java.net.URL;
 import java.util.Scanner;
 
 public class Updater {
-    public static void run(PluginHider plugin, int pluginId) {
-        Version lastVersion = getLatestVersion(pluginId);
+    public static void run() {
+        Version lastVersion = getLatestVersion(Constants.spigotPluginId);
         if (lastVersion == null) {
-            plugin.logger.error("Couldn't fetch latest version information from SpigotMC.");
+            PluginHider.logger.error("Couldn't fetch latest version information from SpigotMC.");
             return;
         }
 
-        if (lastVersion.compareTo(plugin.currentVersion) < 0) {
-            plugin.logger.warning("New version available: " + lastVersion + ", you have: " + plugin.currentVersion);
+        if (lastVersion.compareTo(PluginHider.inst.currentVersion) < 0) {
+            PluginHider.logger.warning("New version available: " + lastVersion + ", you have: " + PluginHider.inst.currentVersion);
         }
     }
 

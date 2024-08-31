@@ -1,7 +1,7 @@
 # PluginHider
 
 Hide your minecraft plugins from prying eyes. The commands can still be executed, but it doesn't show up in the tab completion
-list. Nor when you issue the `/version <plugin name>` command. Not when you issue the `/plugins` command.
+list. Nor when you issue the `/version <plugin name>` command. Nor when you issue the `/plugins` command.
 
 ## Required:
 
@@ -18,7 +18,7 @@ hide_plugins:
 show_plugins:
   - '*'
 
-hide_hidden_plugin_commands: true
+should_allow_colon_tabcompletion: false
 ```
 
 ### `hide_plugins`
@@ -33,9 +33,10 @@ By default, it is `*` (ie: show all).
 
 However, if you want to show just 1 plugin, you can set `*` in the `hide_plugins` entry, and the specific name in here.
 
-### `hide_hidden_plugin_commands`
+### `should_allow_colon_tabcompletion`
 
-If a plugin is hidden, should we also hide its commands? By default, this is true.
+By default, minecraft adds "<pluginname>:" in front of all the commands and allows it to be used that way. However, this is not so nice. So if you set this to
+false (the default), these won't be shown.
 
 The commands can still be executable, they're just not visible anymore.
 

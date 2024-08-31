@@ -20,8 +20,4 @@ public class Logger {
     public void error(String message, Object... args) {
         logger.log(Level.SEVERE, message, args);
     }
-
-    public void debug(String message, Object... args) {
-        logger.log(Level.FINE, message, args);
-    }
 }

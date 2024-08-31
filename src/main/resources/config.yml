@@ -62,9 +62,6 @@ hide_plugins:
 show_plugins:
   - '*'
 
-# Should we attempt to hide the commands of the hidden plugins?
-hide_hidden_plugin_commands: true
-
 # By default, minecraft adds "<pluginname>:" in front of all the commands and allows it.
 #  However, this is not so nice. So if you set this to false, these won't be shown.
 should_allow_colon_tabcompletion: false

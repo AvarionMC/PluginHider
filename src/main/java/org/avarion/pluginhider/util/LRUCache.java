@@ -25,6 +25,7 @@ public class LRUCache<K, V> implements Map<K, V> {
         TimestampedValue<V> value = cache.get(key);
         if (value!=null) {
             if (isExpired(value)) {
+                //noinspection SuspiciousMethodCalls
                 cache.remove(key);
                 return null;
             }
@@ -71,30 +72,20 @@ public class LRUCache<K, V> implements Map<K, V> {
 
     public int size() {
         throw new UnsupportedOperationException();
-//        removeExpiredEntries();
-//        return cache.size();
     }
 
     public boolean isEmpty() {
         throw new UnsupportedOperationException();
-//        removeExpiredEntries();
-//        return cache.isEmpty();
     }
 
     @Override
     public boolean containsKey(Object key) {
         throw new UnsupportedOperationException();
-//        return get(key) != null;
     }
 
     @Override
     public boolean containsValue(Object value) {
         throw new UnsupportedOperationException();
-//        return false;
-    }
-
-    private void removeExpiredEntries() {
-        cache.entrySet().removeIf(entry -> isExpired(entry.getValue()));
     }
 
     private boolean isExpired(@NotNull TimestampedValue<V> value) {
