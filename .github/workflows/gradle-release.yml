@@ -1,0 +1,57 @@
+name: Gradle Build Verification
+
+on:
+  release:
+    types: [ created ]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set outputs
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          CURRENT_VERSION="${TAG#v}"
+
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> "$GITHUB_ENV"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.m2
+          key: ${{ runner.os }}-gradle
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build with Gradle
+        run: ./gradlew -Prevision=${CURRENT_VERSION} clean jar
+
+      - name: Add jar file to release
+        run: gh release upload "${TAG}" "build/libs/PluginHider-${CURRENT_VERSION}.jar" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

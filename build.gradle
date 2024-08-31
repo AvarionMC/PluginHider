@@ -1,3 +1,7 @@
+def determineVersion() {
+    return project.hasProperty('revision') ? project.getProperty('revision') : project.getProperty('version')
+}
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -33,6 +37,9 @@ dependencies {
     // 1.12-1.15: has no HTML colors
     compileOnly "com.github.retrooper:packetevents-spigot:2.4.0"
 }
+
+version = determineVersion()
+project.ext.pluginVersion = version
 
 java.sourceCompatibility = JavaVersion.VERSION_17
 

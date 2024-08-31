@@ -12,7 +12,7 @@ updates:
       prefix: ci
     labels: [ 'skip changelog' ]
 
-  - package-ecosystem: "maven"
+  - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"
