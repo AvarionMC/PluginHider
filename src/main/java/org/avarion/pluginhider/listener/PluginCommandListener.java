@@ -1,41 +1,94 @@
-/*
 package org.avarion.pluginhider.listener;
 
-import org.avarion.pluginhider.PluginHider;
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType.Play.Client;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType.Play.Server;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatCommand;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatCommandUnsigned;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import org.avarion.pluginhider.util.Constants;
+import org.avarion.pluginhider.util.LRUCache;
+import org.avarion.pluginhider.util.ReceivedPackets;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class PluginCommandListener implements Listener {
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-    public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
-        String[] args = event.getMessage().split("\\s+");
+import java.util.UUID;
 
-        String firstArg = args[0].toLowerCase();
-        if (Constants.isVersionCmd(firstArg)) {
-            handleVersionCommand(event);
-        }
-    }
+public class PluginCommandListener extends PacketListenerAbstract {
+    private final LRUCache<UUID, ReceivedPackets> usersSeen = new LRUCache<>(1000);
 
-    private void handleVersionCommand(@NotNull PlayerCommandPreprocessEvent event) {
-        String[] args = event.getMessage().split(" ", 2);
-        if (args.length != 2) {
+    @Override
+    public void onPacketReceive(@NotNull PacketReceiveEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
             return;
         }
 
-        String pluginName = args[1].trim();
-        if (!PluginHider.config.shouldShow(pluginName)) {
-            Player player = event.getPlayer();
-            // default message from spigot when a plugin isn't found.
-            player.sendMessage("This server is not running any plugin by that name.");
-            player.sendMessage("Use /plugins to get a list of plugins.");
+        String cmd = null;
+        if (event.getPacketType()==Client.CHAT_COMMAND) {
+            cmd = "/" + new WrapperPlayClientChatCommand(event).getCommand();
+        } else if (event.getPacketType()==Client.CHAT_COMMAND_UNSIGNED) {
+            cmd = "/" + new WrapperPlayClientChatCommandUnsigned(event).getCommand();
+        }
+        if (cmd==null) return;
 
-            event.setCancelled(true);
+        String[] args = cmd.split("\\s+");
+
+        String firstArg = args[0].toLowerCase();
+        if (Constants.isPluginCmd(firstArg)) {
+            usersSeen.put(player.getUniqueId(), new ReceivedPackets());
+        }
+    }
+
+    @Override
+    public void onPacketSend(@NotNull PacketSendEvent event) {
+        if (event.getPacketType()!=Server.SYSTEM_CHAT_MESSAGE) {
+            return;
+        }
+
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+
+        UUID uuid = player.getUniqueId();
+        ReceivedPackets entry = usersSeen.get(uuid);
+        if (entry==null) {
+            return;
+        }
+
+        Component text = new WrapperPlayServerSystemChatMessage(event).getMessage();
+
+        assert text instanceof TextComponent;
+        StringBuilder sb = new StringBuilder();
+        getFullLine((TextComponent) text, sb);
+
+        entry.addSystemChatLine(sb.toString());
+
+        if (entry.amountOfPlugins==0) {
+            // No plugins...
+            usersSeen.remove(uuid);
+            return;
+        }
+
+        // Don't send out the original text.
+        event.setCancelled(true);
+
+        if (entry.isFinished()) {
+            // Remove this from our cache, so we don't intercept it again
+            usersSeen.remove(uuid);
+            // Send messages if there is anything to send.
+            entry.sendModifiedMessage(player);
+        }
+    }
+
+    private void getFullLine(final @NotNull TextComponent line, final @NotNull StringBuilder sb) {
+        sb.append(line.content());
+        for (var component : line.children()) {
+            assert component instanceof TextComponent;
+            getFullLine((TextComponent) component, sb);
         }
     }
 }
-*/

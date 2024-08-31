@@ -3,14 +3,13 @@ package org.avarion.pluginhider;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
-import org.avarion.pluginhider.listener.TabCompleteListener;
+import org.avarion.pluginhider.listener.DeclareCommandsListener;
+import org.avarion.pluginhider.listener.PluginCommandListener;
 import org.avarion.pluginhider.util.*;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.UUID;
 
 
 public class PluginHider extends JavaPlugin {
@@ -19,7 +18,6 @@ public class PluginHider extends JavaPlugin {
     public static Config config = null;
 
     public final Version currentVersion = new Version(getDescription().getVersion());
-    public final LRUCache<UUID, ReceivedPackets> cachedUsers = new LRUCache<>(1000);
 
     @Override
     public void onEnable() {
@@ -41,8 +39,6 @@ public class PluginHider extends JavaPlugin {
     public void onDisable() {
         disableProtocolLib();
         disableConfig();
-
-        cachedUsers.clear();
     }
 
     //region <Config>
@@ -52,10 +48,6 @@ public class PluginHider extends JavaPlugin {
 
     private void disableConfig() {
         config = null;
-    }
-
-    public Config getMyConfig() {
-        return config;
     }
     //endregion
 
@@ -79,7 +71,8 @@ public class PluginHider extends JavaPlugin {
         PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
         PacketEvents.getAPI().init();
 
-        PacketEvents.getAPI().getEventManager().registerListener(new TabCompleteListener());
+        PacketEvents.getAPI().getEventManager().registerListener(new DeclareCommandsListener());
+        PacketEvents.getAPI().getEventManager().registerListener(new PluginCommandListener());
     }
 
     private void disableProtocolLib() {
