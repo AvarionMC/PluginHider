@@ -39,6 +39,7 @@ public class Config {
         PluginHider.inst.saveDefaultConfig();
         PluginHider.inst.reloadConfig();
         config = PluginHider.inst.getConfig();
+        showCache.clear();
 
         update(hiddenPlugins, "hide_plugins", Collections.emptyList());
         update(shownPlugins, "show_plugins", Collections.singletonList("*"));
