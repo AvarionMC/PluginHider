@@ -73,18 +73,14 @@ public class PluginHider extends JavaPlugin {
     //region <PacketEvents>
     private void setupPacketEvents() {
         PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
-//        PacketEvents.getAPI().init();
+        //        PacketEvents.getAPI().init();
 
-        PacketEvents.getAPI().getEventManager().registerListeners(
-                new DeclareCommandsListener(),
-                new PluginCommandListener(),
-                new VersionCommandListener()
-        );
+        PacketEvents.getAPI().getEventManager().registerListeners(new DeclareCommandsListener(), new PluginCommandListener(), new VersionCommandListener());
     }
 
     private void disableProtocolLib() {
         var theAPI = PacketEvents.getAPI();
-        if (theAPI!=null) {
+        if (theAPI != null) {
             theAPI.terminate();
         }
     }
@@ -102,7 +98,7 @@ public class PluginHider extends JavaPlugin {
 
     private void addCommands() {
         PluginCommand cmd = getCommand("pluginhider");
-        if (cmd==null) {
+        if (cmd == null) {
             logger.error("Cannot find the pluginhider command??");
             getPluginLoader().disablePlugin(this);
             return;

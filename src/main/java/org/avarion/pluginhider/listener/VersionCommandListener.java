@@ -55,9 +55,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
 
     @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        if (!(event.getPlayer() instanceof Player player)
-            || (PluginHider.config.getOperatorCanSeeEverything() && player.isOp())
-            || event.getPacketType() != Client.TAB_COMPLETE) {
+        if (!(event.getPlayer() instanceof Player player) || PluginHider.config.isOpLike(player) || event.getPacketType() != Client.TAB_COMPLETE) {
             return;
         }
 
@@ -75,7 +73,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
             return;
         }
 
-        if (!(event.getPlayer() instanceof Player player) || (PluginHider.config.getOperatorCanSeeEverything() && player.isOp())) {
+        if (!(event.getPlayer() instanceof Player player) || PluginHider.config.isOpLike(player)) {
             return;
         }
 

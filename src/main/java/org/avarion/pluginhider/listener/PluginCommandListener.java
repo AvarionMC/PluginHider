@@ -28,7 +28,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        if (PluginHider.config.getOperatorCanSeeEverything() && player.isOp()) {
+        if (PluginHider.config.isOpLike(player)) {
             return;
         }
 
@@ -55,7 +55,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        if (PluginHider.config.getOperatorCanSeeEverything() && player.isOp()) {
+        if (PluginHider.config.isOpLike(player)) {
             return;
         }
 

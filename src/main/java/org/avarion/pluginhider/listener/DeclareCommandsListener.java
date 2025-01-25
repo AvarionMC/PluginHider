@@ -15,22 +15,6 @@ import java.util.*;
 public class DeclareCommandsListener extends PacketListenerAbstract {
     private static final byte FLAG_HAS_REDIRECT = 0x8;
 
-    private static class Internal {
-        public final WrapperPlayServerDeclareCommands packet;
-        public final List<Node> nodes;
-        public final Node rootNode;
-        public final List<Node> newList = new ArrayList<>();
-        public final Map<Integer, Integer> indexTranslations = new HashMap<>(); // Mapping from original index -> new index
-        public final Map<String, Set<String>> pluginToCmd = new HashMap<>(); // Mapping from plugin name -> list of commands
-
-        Internal(PacketSendEvent event) {
-            packet = new WrapperPlayServerDeclareCommands(event);
-            nodes = packet.getNodes();
-            rootNode = nodes.get(packet.getRootIndex());
-            newList.add(rootNode);
-        }
-    }
-
     @Override
     public void onPacketSend(@NotNull PacketSendEvent event) {
         if (event.getPacketType() != PacketType.Play.Server.DECLARE_COMMANDS) {
@@ -43,7 +27,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             return;
         }
 
-        if (PluginHider.config.getOperatorCanSeeEverything() && player.isOp()) {
+        if (PluginHider.config.isOpLike(player)) {
             return;
         }
 
@@ -78,7 +62,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
 
         String pluginName = null;
         if (parts.length == 2) { // it has ':'
-            if (!PluginHider.config.shouldAllowConolOnTabComplete) {
+            if (!PluginHider.config.getShouldAllowConolOnTabComplete()) {
                 return false;
             }
             pluginName = parts[0];
@@ -160,5 +144,21 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             }
         }
         node.setChildren(newChildren);
+    }
+
+    private static class Internal {
+        public final WrapperPlayServerDeclareCommands packet;
+        public final List<Node> nodes;
+        public final Node rootNode;
+        public final List<Node> newList = new ArrayList<>();
+        public final Map<Integer, Integer> indexTranslations = new HashMap<>(); // Mapping from original index -> new index
+        public final Map<String, Set<String>> pluginToCmd = new HashMap<>(); // Mapping from plugin name -> list of commands
+
+        Internal(PacketSendEvent event) {
+            packet = new WrapperPlayServerDeclareCommands(event);
+            nodes = packet.getNodes();
+            rootNode = nodes.get(packet.getRootIndex());
+            newList.add(rootNode);
+        }
     }
 }

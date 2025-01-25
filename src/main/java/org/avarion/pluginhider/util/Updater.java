@@ -34,8 +34,7 @@ public class Updater {
             if (scanner.hasNext()) {
                 return new Version(scanner.next());
             }
-        }
-        catch (URISyntaxException | IOException ignored) {
+        } catch (URISyntaxException | IOException ignored) {
         }
 
         return null;

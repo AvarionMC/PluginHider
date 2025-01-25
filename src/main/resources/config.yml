@@ -68,3 +68,6 @@ should_allow_colon_tabcompletion: false
 
 # Should an operator see all commands (ie: PluginHider won't work for ops?)
 operator_can_see_everything: false
+
+# This setting can be used in order to allow ops to see everything, but some ops not
+uuids_to_explicitly_disallow:
