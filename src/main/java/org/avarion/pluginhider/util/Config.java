@@ -11,6 +11,7 @@ public class Config {
     private final List<String> hiddenPlugins = new ArrayList<>();
     private final List<String> shownPlugins = new ArrayList<>();
     public boolean shouldAllowConolOnTabComplete = false;
+    public boolean operatorCanSeeEverything = false;
     private FileConfiguration config;
     private boolean hideAll = false;
     private final Map<String, Boolean> showCache = new LinkedHashMap<>(1000, 0.75f, true) {
@@ -46,6 +47,11 @@ public class Config {
 
         hideAll = hiddenPlugins.contains("*");
         shouldAllowConolOnTabComplete = config.getBoolean("should_allow_colon_tabcompletion", false);
+        operatorCanSeeEverything = config.getBoolean("operator_can_see_everything", false);
+    }
+
+    public boolean getOperatorCanSeeEverything() {
+        return operatorCanSeeEverything;
     }
 
     public boolean shouldShow(@Nullable final String pluginName) {

@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCh
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Constants;
 import org.avarion.pluginhider.util.LRUCache;
 import org.avarion.pluginhider.util.ReceivedPackets;
@@ -27,7 +28,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        if (player.isOp()) {
+        if (PluginHider.config.getOperatorCanSeeEverything() && player.isOp()) {
             return;
         }
 
@@ -54,7 +55,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        if (player.isOp()) {
+        if (PluginHider.config.getOperatorCanSeeEverything() && player.isOp()) {
             return;
         }
 

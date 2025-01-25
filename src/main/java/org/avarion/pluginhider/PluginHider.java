@@ -108,7 +108,8 @@ public class PluginHider extends JavaPlugin {
             return;
         }
 
-        cmd.setExecutor(new PluginHiderCommand());
-        cmd.setTabCompleter(new PluginHiderCommand());
+        PluginHiderCommand phc = new PluginHiderCommand();
+        cmd.setExecutor(phc);
+        cmd.setTabCompleter(phc);
     }
 }

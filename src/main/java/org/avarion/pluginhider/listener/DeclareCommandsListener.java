@@ -43,7 +43,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             return;
         }
 
-        if (player.isOp()) {
+        if (PluginHider.config.getOperatorCanSeeEverything() && player.isOp()) {
             return;
         }
 
