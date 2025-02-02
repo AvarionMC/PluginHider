@@ -1,6 +1,7 @@
 package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
+import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -34,8 +35,8 @@ public class Updater {
             if (scanner.hasNext()) {
                 return new Version(scanner.next());
             }
-        }
-        catch (URISyntaxException | IOException ignored) {
+        } catch (URISyntaxException | IOException e) {
+            Bukkit.getLogger().warning("Couldn't fetch latest version information from SpigotMC: " + e.getMessage());
         }
 
         return null;

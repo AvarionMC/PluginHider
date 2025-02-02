@@ -23,7 +23,7 @@ public class LRUCache<K, V> implements Map<K, V> {
 
     public V get(Object key) {
         TimestampedValue<V> value = cache.get(key);
-        if (value!=null) {
+        if (value != null) {
             if (isExpired(value)) {
                 //noinspection SuspiciousMethodCalls
                 cache.remove(key);
@@ -36,12 +36,12 @@ public class LRUCache<K, V> implements Map<K, V> {
 
     public V put(K key, V value) {
         TimestampedValue<V> oldValue = cache.put(key, new TimestampedValue<>(value));
-        return (oldValue!=null) ? oldValue.value() : null;
+        return (oldValue != null) ? oldValue.value() : null;
     }
 
     public V remove(Object key) {
         TimestampedValue<V> value = cache.remove(key);
-        if (value!=null && !isExpired(value)) {
+        if (value != null && !isExpired(value)) {
             return value.value();
         }
         return null;

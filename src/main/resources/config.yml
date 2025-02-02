@@ -52,6 +52,9 @@
 #
 # Remember, the show_plugins configuration takes precedence over hide_plugins.
 # If a plugin is listed in both show_plugins and hide_plugins, it will be shown.
+#
+# Default minecraft/bukkit commands will always be shown when you add '*' to `hide_plugins`.
+# If you want to explicitly hide these, add 'minecraft' or 'bukkit' (or both) into `hide_plugins`
 
 
 hide_plugins:
@@ -65,3 +68,9 @@ show_plugins:
 # By default, minecraft adds "<pluginname>:" in front of all the commands and allows it.
 #  However, this is not so nice. So if you set this to false, these won't be shown.
 should_allow_colon_tabcompletion: false
+
+# Should an operator see all commands (ie: PluginHider won't work for ops?)
+operator_can_see_everything: false
+
+# This setting can be used in order to allow ops to see everything, but some ops not
+uuids_to_explicitly_disallow:

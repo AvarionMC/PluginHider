@@ -26,11 +26,15 @@ public class ReceivedPackets {
     public void addSystemChatLine(final String line) {
         lineCounter++;
 
-        if (lineCounter==1) {
+        if (lineCounter == 1) {
             interpretAmountOfPlugins(line);
-        } else if (lineCounter==2) {
-            if (!line.endsWith(":")) throw new RuntimeException("Invalid 'Bukkit' line: " + line);
-        } else {
+        }
+        else if (lineCounter == 2) {
+            if (!line.endsWith(":")) {
+                throw new IllegalArgumentException("Invalid 'Bukkit' line: " + line);
+            }
+        }
+        else {
             interpretPluginLine(line);
         }
     }
@@ -53,7 +57,7 @@ public class ReceivedPackets {
     }
 
     public boolean isFinished() {
-        return amountOfPlugins!=null && pluginsSeen.size() >= amountOfPlugins;
+        return amountOfPlugins != null && pluginsSeen.size() >= amountOfPlugins;
     }
 
     // region <Message sending>
@@ -103,7 +107,7 @@ public class ReceivedPackets {
             Plugin pl = Bukkit.getPluginManager().getPlugin(pluginName);
 
             TextComponent tmp = new TextComponent(pluginName);
-            tmp.setColor(pl!=null && pl.isEnabled() ? ChatColor.GREEN : ChatColor.RED);
+            tmp.setColor(pl != null && pl.isEnabled() ? ChatColor.GREEN : ChatColor.RED);
             tmp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/version " + pluginName));
             msg.addExtra(tmp);
 

@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCh
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Constants;
 import org.avarion.pluginhider.util.LRUCache;
 import org.avarion.pluginhider.util.ReceivedPackets;
@@ -27,10 +28,15 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
+        if (PluginHider.config.isOpLike(player)) {
+            return;
+        }
+
         String cmd = null;
-        if (event.getPacketType()==Client.CHAT_COMMAND) {
+        if (event.getPacketType() == Client.CHAT_COMMAND) {
             cmd = "/" + new WrapperPlayClientChatCommand(event).getCommand();
-        } else if (event.getPacketType()==Client.CHAT_COMMAND_UNSIGNED) {
+        }
+        else if (event.getPacketType() == Client.CHAT_COMMAND_UNSIGNED) {
             cmd = "/" + new WrapperPlayClientChatCommandUnsigned(event).getCommand();
         }
 
@@ -41,7 +47,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
 
     @Override
     public void onPacketSend(@NotNull PacketSendEvent event) {
-        if (event.getPacketType()!=Server.SYSTEM_CHAT_MESSAGE) {
+        if (event.getPacketType() != Server.SYSTEM_CHAT_MESSAGE) {
             return;
         }
 
@@ -49,9 +55,13 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
+        if (PluginHider.config.isOpLike(player)) {
+            return;
+        }
+
         UUID uuid = player.getUniqueId();
         ReceivedPackets entry = usersSeen.get(uuid);
-        if (entry==null) {
+        if (entry == null) {
             return;
         }
 
@@ -63,7 +73,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
 
         entry.addSystemChatLine(sb.toString());
 
-        if (entry.amountOfPlugins==0) {
+        if (entry.amountOfPlugins == 0) {
             // No plugins...
             usersSeen.remove(uuid);
             return;

@@ -37,7 +37,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
 
     private void handleVersionCommand(@NotNull PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().split("\\s+");
-        if (args.length!=2) {
+        if (args.length != 2) {
             event.setCancelled(true);
             return;
         }
@@ -55,11 +55,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
 
     @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) {
-            return;
-        }
-
-        if (event.getPacketType()!=Client.TAB_COMPLETE) {
+        if (!(event.getPlayer() instanceof Player player) || PluginHider.config.isOpLike(player) || event.getPacketType() != Client.TAB_COMPLETE) {
             return;
         }
 
@@ -73,16 +69,18 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
 
     @Override
     public void onPacketSend(@NotNull PacketSendEvent event) {
-        if (event.getPacketType()!=Server.TAB_COMPLETE) {
+        if (event.getPacketType() != Server.TAB_COMPLETE) {
             return;
         }
 
-        if (!(event.getPlayer() instanceof Player player)) {
+        if (!(event.getPlayer() instanceof Player player) || PluginHider.config.isOpLike(player)) {
             return;
         }
 
         String prevCmd = usersSeen.remove(player.getUniqueId());
-        if (prevCmd==null) return;
+        if (prevCmd == null) {
+            return;
+        }
 
         WrapperPlayServerTabComplete packet = new WrapperPlayServerTabComplete(event);
         List<CommandMatch> suggestions = packet.getCommandMatches();
@@ -94,7 +92,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
             }
         }
 
-        if (suggestions.size()!=newSuggestions.size()) {
+        if (suggestions.size() != newSuggestions.size()) {
             packet.setCommandMatches(newSuggestions);
         }
     }
