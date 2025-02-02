@@ -31,7 +31,7 @@ public class ReceivedPackets {
         }
         else if (lineCounter == 2) {
             if (!line.endsWith(":")) {
-                throw new RuntimeException("Invalid 'Bukkit' line: " + line);
+                throw new IllegalArgumentException("Invalid 'Bukkit' line: " + line);
             }
         }
         else {
