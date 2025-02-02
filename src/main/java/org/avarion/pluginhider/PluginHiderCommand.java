@@ -5,9 +5,8 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.command.TabExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ interface CommandAction {
     void execute(CommandSender sender);
 }
 
-public class PluginHiderCommand implements CommandExecutor, TabCompleter {
+public class PluginHiderCommand implements TabExecutor {
     private final Map<String, Action> functions = new LinkedHashMap<>();
 
     public PluginHiderCommand() {
@@ -90,7 +89,7 @@ public class PluginHiderCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String @NotNull [] args) {
         if (args.length != 1) {
             return null;
         }

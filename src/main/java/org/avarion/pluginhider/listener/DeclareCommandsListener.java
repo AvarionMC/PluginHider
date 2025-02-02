@@ -32,24 +32,9 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
         }
 
         Internal internal = new Internal(event);
-        loadPluginCommands(internal);
         filter(internal, internal.rootNode, false);
         internal.packet.setNodes(internal.newList);
-    }
-
-    private void loadPluginCommands(@NotNull Internal data) {
-        for (Integer idx : data.rootNode.getChildren()) {
-            if (idx == null) {
-                continue;
-            }
-            final String name = data.nodes.get(idx).getName().orElse("").toLowerCase(Locale.ENGLISH);
-            if (!name.contains(":")) {
-                continue;
-            }
-
-            String[] parts = name.split(":", 2);
-            data.pluginToCmd.computeIfAbsent(parts[0], k -> new HashSet<>()).add(parts[1]);
-        }
+        internal.packet.write();
     }
 
     private boolean shouldShow(@NotNull String name, Internal data) {
@@ -92,20 +77,23 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             return;
         }
 
-        final int redirectNodeIndex = node.getRedirectNodeIndex();
-        final Node redirectedNode = data.nodes.get(redirectNodeIndex);
+        final int oldRedirectIndex = node.getRedirectNodeIndex();
+        final Node redirectedNode = data.nodes.get(oldRedirectIndex);
         assert redirectedNode != null;
 
-        Integer newRedirectNodeIndex = data.indexTranslations.get(redirectNodeIndex);
-        if (newRedirectNodeIndex == null) { // unknown yet
-            newRedirectNodeIndex = data.newList.size();
-            node.setRedirectNodeIndex(newRedirectNodeIndex);
+        Integer newRedirectIndex = data.indexTranslations.get(oldRedirectIndex);
+        if (newRedirectIndex != null) {
+            node.setRedirectNodeIndex(newRedirectIndex);
+        }
+        else { // unknown yet
+            newRedirectIndex = data.newList.size();
+            node.setRedirectNodeIndex(newRedirectIndex);
             data.newList.add(redirectedNode);
 
-            data.indexTranslations.put(redirectNodeIndex, newRedirectNodeIndex);
+            data.indexTranslations.put(oldRedirectIndex, newRedirectIndex);
 
             // Only dig deeper when I don't know it yet
-            handleRedirection(data.nodes.get(redirectNodeIndex), data);
+            handleRedirection(data.nodes.get(oldRedirectIndex), data);
         }
     }
 
@@ -116,7 +104,9 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
 
         List<Integer> newChildren = new ArrayList<>();
 
+        int childIndex = -1;
         for (Integer idx : node.getChildren()) {
+            childIndex += 1;
             if (idx == null) {
                 continue;
             }
@@ -126,7 +116,8 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                 continue;
             }
 
-            if (alwaysAdd || shouldShow(child.getName().orElse(""), data)) {
+            final String name = child.getName().orElse("");
+            if (alwaysAdd || shouldShow(name, data)) {
                 if (data.indexTranslations.containsKey(idx)) {
                     // Already in the list!
                     newChildren.add(data.indexTranslations.get(idx));
@@ -135,6 +126,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                     final int newIndex = data.newList.size();
 
                     newChildren.add(newIndex);
+                    node.getChildren().set(childIndex, newIndex);
                     data.newList.add(child);
                     data.indexTranslations.put(idx, newIndex);
 
@@ -147,18 +139,37 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
     }
 
     private static class Internal {
-        public final WrapperPlayServerDeclareCommands packet;
-        public final List<Node> nodes;
-        public final Node rootNode;
-        public final List<Node> newList = new ArrayList<>();
-        public final Map<Integer, Integer> indexTranslations = new HashMap<>(); // Mapping from original index -> new index
-        public final Map<String, Set<String>> pluginToCmd = new HashMap<>(); // Mapping from plugin name -> list of commands
+        private final WrapperPlayServerDeclareCommands packet;
+        private final List<Node> nodes;
+        private final Node rootNode;
+        private final List<Node> newList = new ArrayList<>();
+        private final Map<Integer, Integer> indexTranslations = new HashMap<>(); // Mapping from original index -> new index
+        private final Map<String, Set<String>> pluginToCmd = new HashMap<>(); // Mapping from plugin name -> list of commands
 
         Internal(PacketSendEvent event) {
             packet = new WrapperPlayServerDeclareCommands(event);
             nodes = packet.getNodes();
             rootNode = nodes.get(packet.getRootIndex());
             newList.add(rootNode);
+
+            loadPluginCommands();
         }
+
+        private void loadPluginCommands() {
+            for (Integer idx : rootNode.getChildren()) {
+                if (idx == null) {
+                    continue;
+                }
+
+                final String name = nodes.get(idx).getName().orElse("").toLowerCase(Locale.ENGLISH);
+                if (!name.contains(":")) {
+                    continue;
+                }
+
+                String[] parts = name.split(":", 2);
+                pluginToCmd.computeIfAbsent(parts[0], k -> new HashSet<>()).add(parts[1]);
+            }
+        }
+
     }
 }

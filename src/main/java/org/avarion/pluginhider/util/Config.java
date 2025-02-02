@@ -73,13 +73,17 @@ public class Config {
                         return false;
                     }
 
-                    String[] parts = k.toLowerCase().trim().split("\\s+", 2);
-                    if (shownPlugins.contains(parts[0])) {
+                    String cleaned_name = k.toLowerCase().trim().split("\\s+", 2)[0];
+                    if (shownPlugins.contains(cleaned_name)) {
                         return true; // explicitly shown
                     }
-                    if (hiddenPlugins.contains(parts[0])) {
+                    if (hiddenPlugins.contains(cleaned_name)) {
                         return false; // explicitly hidden
                     }
+                    if (hideAll && ("minecraft".equals(cleaned_name) || "bukkit".equals(cleaned_name))) {
+                        return true; // It wasn't explicitly mentioned inside "hide plugins" section: so default MC commands are visible.
+                    }
+
                     return !hideAll; // if all plugins are hidden;
                 }
         );
