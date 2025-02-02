@@ -162,12 +162,10 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                 }
 
                 final String name = nodes.get(idx).getName().orElse("").toLowerCase(Locale.ENGLISH);
-                if (!name.contains(":")) {
-                    continue;
+                if (name.contains(":")) {
+                    String[] parts = name.split(":", 2);
+                    pluginToCmd.computeIfAbsent(parts[0], k -> new HashSet<>()).add(parts[1]);
                 }
-
-                String[] parts = name.split(":", 2);
-                pluginToCmd.computeIfAbsent(parts[0], k -> new HashSet<>()).add(parts[1]);
             }
         }
 
