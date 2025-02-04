@@ -7,6 +7,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.avarion.pluginhider.PluginHider;
+import org.avarion.pluginhider.exceptions.SectionExpectedException;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
 
 
 public class ReceivedPackets {
-    private final static Pattern amountPluginsPattern = Pattern.compile("\\(\\s*(\\d+)\\s*\\)\\s*:\\s*$");
+    private static final Pattern amountPluginsPattern = Pattern.compile("\\(\\s*(\\d+)\\s*\\)\\s*:\\s*$");
     private final HashMap<net.kyori.adventure.text.TextComponent, List<String>> pluginsSeen = new LinkedHashMap<>();
     public Integer amountOfPlugins = null;
     private net.kyori.adventure.text.TextComponent currentSection = null;
@@ -49,7 +50,7 @@ public class ReceivedPackets {
             currentSection = tc;
         }
         else if (currentSection == null) {
-            throw new RuntimeException("I expected to see a section first!");
+            throw new SectionExpectedException();
         }
         else {
             interpretPluginLine(line);
