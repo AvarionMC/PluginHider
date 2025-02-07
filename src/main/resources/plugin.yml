@@ -14,4 +14,4 @@ commands:
   pluginhider:
     description: Reloads the PluginHiders configuration
     usage: /pluginhider reload
-    aliases: [ph]
+    aliases: [ ph ]

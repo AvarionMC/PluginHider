@@ -14,6 +14,7 @@ import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Constants;
 import org.avarion.pluginhider.util.LRUCache;
 import org.avarion.pluginhider.util.ReceivedPackets;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,16 +67,19 @@ public class PluginCommandListener extends PacketListenerAbstract {
         }
 
         Component text = new WrapperPlayServerSystemChatMessage(event).getMessage();
+        if (!(text instanceof TextComponent tc)) {
+            Bukkit.getLogger().severe("Invalid system chat message type received (" + text.getClass().getName() + ")");
+            usersSeen.remove(uuid);
+            event.setCancelled(true);
+            return;
+        }
 
-        assert text instanceof TextComponent;
-        StringBuilder sb = new StringBuilder();
-        getFullLine((TextComponent) text, sb);
-
-        entry.addSystemChatLine(sb.toString());
+        entry.addSystemChatLine(tc);
 
         if (entry.amountOfPlugins == 0) {
             // No plugins...
             usersSeen.remove(uuid);
+            // Don't cancel the original text
             return;
         }
 
@@ -87,14 +91,6 @@ public class PluginCommandListener extends PacketListenerAbstract {
             usersSeen.remove(uuid);
             // Send messages if there is anything to send.
             entry.sendModifiedMessage(player);
-        }
-    }
-
-    private void getFullLine(final @NotNull TextComponent line, final @NotNull StringBuilder sb) {
-        sb.append(line.content());
-        for (var component : line.children()) {
-            assert component instanceof TextComponent;
-            getFullLine((TextComponent) component, sb);
         }
     }
 }
