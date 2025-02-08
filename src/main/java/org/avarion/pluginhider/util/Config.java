@@ -2,70 +2,49 @@ package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.Settings;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Config {
-    private final Set<UUID> hideFromUUIDs = new HashSet<>();
     private final Map<String, Boolean> showCache = new LinkedHashMap<>(1000, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
             return size() > 1000;
         }
     };
-    private boolean hideAll = false;
     private final File configLocation;
     private final Settings settings = new Settings();
+    private boolean hideAll = false;
 
     public Config() {
         configLocation = new File(PluginHider.inst.getDataFolder(), "config.yml");
         reload();
     }
 
-    private void update(@NotNull List<String> target, String source, List<String> def) {
-        target.clear();
-
-        if (!config.contains(source)) {
-            target.addAll(def);
-        }
-        else {
-            config.getStringList(source).stream().map(String::toLowerCase).forEach(target::add);
-        }
-    }
-
     public void reload() {
         try {
             settings.load(configLocation);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            Bukkit.getLogger().severe("Failed to load config.yml: " + e.getMessage());
         }
 
         showCache.clear();
 
-        update(hiddenPlugins, "hide_plugins", List.of());
-        update(shownPlugins, "show_plugins", Collections.singletonList("*"));
-
-        List<String> tmp = new ArrayList<>();
-        update(tmp, "uuids_to_explicitly_disallow", List.of());
-
-        hideFromUUIDs.clear();
-        tmp.forEach(s -> hideFromUUIDs.add(UUID.fromString(s)));
-
         hideAll = settings.hidePlugins.contains("*");
-        shouldAllowConolOnTabComplete = config.getBoolean("should_allow_colon_tabcompletion", false);
-        operatorCanSeeEverything = config.getBoolean("operator_can_see_everything", false);
     }
 
     public boolean isOpLike(@Nullable Player player) {
-        return player != null && player.isOp() && operatorCanSeeEverything && !hideFromUUIDs.contains(player.getUniqueId());
+        return player != null && player.isOp() && settings.operatorCanSeeEverything && !settings.uuidsToExplicitlyDisallow.contains(player.getUniqueId());
     }
 
     public boolean getShouldAllowConolOnTabComplete() {
-        return shouldAllowConolOnTabComplete;
+        return settings.shouldAllowColonTabcompletion;
     }
 
     public boolean shouldShow(@Nullable final String pluginName) {
@@ -76,7 +55,7 @@ public class Config {
                     }
 
                     String cleanedName = k.toLowerCase().trim().split("\\s+", 2)[0];
-                    if (shownPlugins.contains(cleanedName)) {
+                    if (settings.showPlugins.contains(cleanedName)) {
                         return true; // explicitly shown
                     }
                     if (settings.hidePlugins.contains(cleanedName)) {

@@ -2,12 +2,14 @@ package org.avarion.pluginhider;
 
 import org.avarion.yaml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @YamlFile(
         lenient = Leniency.LENIENT, header = """
@@ -98,11 +100,11 @@ import java.util.UUID;
 public class Settings extends YamlFileInterface {
     @YamlComment("List of plugins to hide from players. Use '*' to hide all plugins.")
     @YamlKey("hide_plugins")
-    public List<String> hidePlugins = List.of("PluginHider", "ProtocolLib", "packetevents");
+    public Set<String> hidePlugins = Set.of("PluginHider", "ProtocolLib", "packetevents");
 
     @YamlComment("List of plugins to show, even if they would otherwise be hidden. Takes priority over hide_plugins.")
     @YamlKey("show_plugins")
-    public List<String> showPlugins = List.of("*");
+    public Set<String> showPlugins = Set.of("*");
 
     @YamlComment(
             """
@@ -131,14 +133,22 @@ public class Settings extends YamlFileInterface {
                     """
     )
     @YamlKey("uuids_to_explicitly_disallow")
-    public List<UUID> uuidsToExplicitlyDisallow = List.of();
+    public Set<UUID> uuidsToExplicitlyDisallow = Set.of();
+
+    private @NotNull Set<String> makeLowerCase(@Nullable Set<String> entries) {
+        if (entries == null) {
+            return Set.of();
+        }
+
+        return entries.stream().map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet());
+    }
 
     @Override
     public <T extends YamlFileInterface> T load(@NotNull File file) throws IOException {
         T loaded = super.load(file);
 
-        hidePlugins = hidePlugins.stream().map(p -> p.toLowerCase(Locale.ENGLISH)).toList();
-        showPlugins = showPlugins.stream().map(p -> p.toLowerCase(Locale.ENGLISH)).toList();
+        hidePlugins = makeLowerCase(hidePlugins);
+        showPlugins = makeLowerCase(showPlugins);
 
         super.save(file);
 
