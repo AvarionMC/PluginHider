@@ -1,16 +1,16 @@
 package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.avarion.pluginhider.Settings;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class Config {
-    private final List<String> hiddenPlugins = new ArrayList<>();
-    private final List<String> shownPlugins = new ArrayList<>();
     private final Set<UUID> hideFromUUIDs = new HashSet<>();
     private final Map<String, Boolean> showCache = new LinkedHashMap<>(1000, 0.75f, true) {
         @Override
@@ -18,12 +18,12 @@ public class Config {
             return size() > 1000;
         }
     };
-    private boolean shouldAllowConolOnTabComplete = false;
-    private boolean operatorCanSeeEverything = false;
-    private FileConfiguration config;
     private boolean hideAll = false;
+    private final File configLocation;
+    private final Settings settings = new Settings();
 
     public Config() {
+        configLocation = new File(PluginHider.inst.getDataFolder(), "config.yml");
         reload();
     }
 
@@ -39,9 +39,11 @@ public class Config {
     }
 
     public void reload() {
-        PluginHider.inst.saveDefaultConfig();
-        PluginHider.inst.reloadConfig();
-        config = PluginHider.inst.getConfig();
+        try {
+            settings.load(configLocation);
+        } catch (IOException ignored) {
+        }
+
         showCache.clear();
 
         update(hiddenPlugins, "hide_plugins", List.of());
@@ -53,7 +55,7 @@ public class Config {
         hideFromUUIDs.clear();
         tmp.forEach(s -> hideFromUUIDs.add(UUID.fromString(s)));
 
-        hideAll = hiddenPlugins.contains("*");
+        hideAll = settings.hidePlugins.contains("*");
         shouldAllowConolOnTabComplete = config.getBoolean("should_allow_colon_tabcompletion", false);
         operatorCanSeeEverything = config.getBoolean("operator_can_see_everything", false);
     }
@@ -77,7 +79,7 @@ public class Config {
                     if (shownPlugins.contains(cleanedName)) {
                         return true; // explicitly shown
                     }
-                    if (hiddenPlugins.contains(cleanedName)) {
+                    if (settings.hidePlugins.contains(cleanedName)) {
                         return false; // explicitly hidden
                     }
                     if (hideAll && ("minecraft".equals(cleanedName) || "bukkit".equals(cleanedName))) {
