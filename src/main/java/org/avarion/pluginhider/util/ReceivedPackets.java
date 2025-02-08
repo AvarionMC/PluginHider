@@ -141,6 +141,7 @@ public class ReceivedPackets {
         for (var pluginName : plugins) {
             if (!isFirst) {
                 TextComponent tmp = new TextComponent(", ");
+                tmp.setColor(ChatColor.WHITE);
                 msg.addExtra(tmp);
             }
 
