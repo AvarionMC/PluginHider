@@ -143,12 +143,19 @@ public class Settings extends YamlFileInterface {
         return entries.stream().map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet());
     }
 
+    private <T> @NotNull Set<T> cleanUp(@Nullable Set<T> entries) {
+        return entries == null ? Set.of() : entries;
+    }
+
     @Override
     public <T extends YamlFileInterface> T load(@NotNull File file) throws IOException {
         T loaded = super.load(file);
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
+        uuidsToExplicitlyDisallow = cleanUp(uuidsToExplicitlyDisallow);
+        hidePlugins = cleanUp(hidePlugins);
+        showPlugins = cleanUp(showPlugins);
 
         super.save(file);
 
