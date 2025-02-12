@@ -154,8 +154,6 @@ public class Settings extends YamlFileInterface {
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
         uuidsToExplicitlyDisallow = cleanUp(uuidsToExplicitlyDisallow);
-        hidePlugins = cleanUp(hidePlugins);
-        showPlugins = cleanUp(showPlugins);
 
         super.save(file);
 
