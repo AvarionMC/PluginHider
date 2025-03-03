@@ -13,6 +13,7 @@ Configuration is managed through the `config.yml` file:
 
 ```yaml
 # List of plugins to hide from players. Use '*' to hide all plugins.
+# IMPORTANT: Default Minecraft/Bukkit commands remain visible even with '*' unless explicitly hidden.
 hide_plugins:
    - PluginHider
    - ProtocolLib
@@ -32,16 +33,36 @@ should_allow_colon_tabcompletion: false
 # Set to false if you want hiding rules to apply to operators as well.
 operator_can_see_everything: false
 
-# List of operator UUIDs that could see all commands, even when operator_can_see_everything is false.
-# Format: List of player UUIDs
-show_everything_to_these_uuids:
+# List of player UUIDs that should see all commands, even when not operators
+# or when operator_can_see_everything is false.
+whitelisted_uuids:
    - 01234567-89ab-cdef-0123-456789abcdef
+
+# List of player UUIDs that should always be treated as normal users, even when
+# they're operators and operator_can_see_everything is true.
+blacklisted_uuids:
+   - fedcba98-7654-3210-fedc-ba9876543210
 ```
+
+### Bukkit and Minecraft Commands Visibility
+
+**Important Note:** When using `'*'` in `hide_plugins`, all plugin commands will be hidden **EXCEPT** for default
+Minecraft and Bukkit commands.
+
+To explicitly hide Minecraft and Bukkit commands as well:
+
+```yaml
+hide_plugins:
+   - '*'
+   - minecraft
+   - bukkit
+```
+
+This will make virtually all commands invisible to non-privileged players.
 
 ### Configuration Guide
 
 #### Basic Concepts:
-
 - `hide_plugins`: List of plugins to hide
 - `show_plugins`: List of plugins to explicitly show
 - `'*'` in `hide_plugins`: Hides all plugins not listed in `show_plugins`
@@ -50,7 +71,6 @@ show_everything_to_these_uuids:
 #### Example Scenarios
 
 Let's say you have these plugins installed:
-
 - pluginA
 - pluginB
 - pluginC
@@ -73,7 +93,7 @@ Let's say you have these plugins installed:
    show_plugins:
      - pluginB
    ```
-   Result: Only pluginB will be visible
+   Result: Only pluginB and default Minecraft/Bukkit commands will be visible
 
 3. **Hide Multiple Specific Plugins**  
    To hide pluginB and pluginD:
@@ -93,7 +113,7 @@ Let's say you have these plugins installed:
      - pluginA
      - pluginC
    ```
-   Result: Only pluginA and pluginC will be visible
+   Result: Only pluginA, pluginC, and default Minecraft/Bukkit commands will be visible
 
 5. **Hide All Plugins**  
    To hide all plugins except Minecraft/Bukkit commands:
@@ -113,13 +133,20 @@ Let's say you have these plugins installed:
    ```
    Result: No commands will be visible at all
 
-### Operator Settings
+### Player Permission Control
 
-PluginHider allows you to configure whether operators (and specific players) can see all plugins:
+PluginHider provides fine-grained control over which players can see all plugins:
 
-- `operator_can_see_everything`: When true, server operators can see all plugins regardless of hide/show settings
-- `show_everything_to_these_uuids`: Specify UUIDs of players who should see all plugins even when
-  `operator_can_see_everything` is false
+- **Operator Control**:
+   - `operator_can_see_everything`: When true, server operators can see all plugins regardless of hide/show settings
+
+- **Whitelist/Blacklist System**:
+   - `whitelisted_uuids`: Players who can see all plugins, even when not operators or when `operator_can_see_everything`
+     is false
+   - `blacklisted_uuids`: Players who are treated as normal users and can't see hidden plugins, even when they're
+     operators and `operator_can_see_everything` is true
+
+This system gives you precise control over who can see what, regardless of their operator status.
 
 ### Tab Completion Format
 
