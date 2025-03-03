@@ -157,8 +157,7 @@ public class Settings extends YamlFileInterface {
             return Set.of();
         }
 
-        entries.removeIf(Objects::isNull);
-        return entries;
+        return entries.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
