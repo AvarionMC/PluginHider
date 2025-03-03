@@ -73,8 +73,10 @@ tasks.register('deploy', Copy) {
 }
 
 processResources {
+    var props = project.properties;
+
     filesMatching('plugin.yml') {
-        expand(project.properties)
+        expand(props)
     }
 }
 

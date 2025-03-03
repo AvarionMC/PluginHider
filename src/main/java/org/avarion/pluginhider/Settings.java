@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -127,24 +128,37 @@ public class Settings extends YamlFileInterface {
 
     @YamlComment(
             """
-                    List of operator UUIDs that should NOT see all plugins, even when operator_can_see_everything is true.
-                    Use this to create exceptions for specific operators who should follow the same visibility rules as regular players.
-                    Format: List of player UUIDs as strings
+                    List of operator UUIDs that should see all commands, even when he is not an operator or operator_can_see_everything is false.
+                    Format: List of player UUIDs
                     """
     )
-    @YamlKey("uuids_to_explicitly_disallow")
-    public Set<UUID> uuidsToExplicitlyDisallow = Set.of();
+    @YamlKey("whitelisted_uuids")
+    public Set<UUID> whitelist = Set.of();
+
+    @YamlComment(
+            """
+                    List of operator UUIDs that should always be treated as normal users, even when he's an operator and operator_can_see_everything is true.
+                    Format: List of player UUIDs
+                    """
+    )
+    @YamlKey("blacklisted_uuids")
+    public Set<UUID> blacklist = Set.of();
 
     private @NotNull Set<String> makeLowerCase(@Nullable Set<String> entries) {
         if (entries == null) {
             return Set.of();
         }
 
-        return entries.stream().map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet());
+        return entries.stream().filter(Objects::nonNull).map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet());
     }
 
     private <T> @NotNull Set<T> cleanUp(@Nullable Set<T> entries) {
-        return entries == null ? Set.of() : entries;
+        if (entries == null) {
+            return Set.of();
+        }
+
+        entries.removeIf(Objects::isNull);
+        return entries;
     }
 
     @Override
@@ -153,7 +167,8 @@ public class Settings extends YamlFileInterface {
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
-        uuidsToExplicitlyDisallow = cleanUp(uuidsToExplicitlyDisallow);
+        whitelist = cleanUp(whitelist);
+        blacklist = cleanUp(blacklist);
 
         super.save(file);
 
