@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Config {
     private final Map<String, Boolean> showCache = new LinkedHashMap<>(1000, 0.75f, true) {
@@ -40,7 +41,12 @@ public class Config {
     }
 
     public boolean isOpLike(@Nullable Player player) {
-        return player != null && player.isOp() && settings.operatorCanSeeEverything && !settings.uuidsToExplicitlyDisallow.contains(player.getUniqueId());
+        if (player == null) return false;
+
+        UUID id = player.getUniqueId();
+        if (settings.uuidsToExplicitlyAllow.contains(id)) return true;
+
+        return settings.operatorCanSeeEverything && player.isOp();
     }
 
     public boolean getShouldAllowConolOnTabComplete() {
