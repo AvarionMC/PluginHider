@@ -1,7 +1,7 @@
 # PluginHider
 
-Hide your minecraft plugins from prying eyes. The commands can still be executed, but it doesn't show up in the tab completion
-list. Nor when you issue the `/version <plugin name>` command. Nor when you issue the `/plugins` command.
+Hide your Minecraft plugins from prying eyes. The plugin commands can still be executed, but they won't show up in tab
+completion, `/version <plugin name>` command results, or when players use the `/plugins` command.
 
 ## Required:
 
@@ -9,36 +9,127 @@ list. Nor when you issue the `/version <plugin name>` command. Nor when you issu
 
 ## Configuration
 
-Configuration is relatively simple:
+Configuration is managed through the `config.yml` file:
 
 ```yaml
+# List of plugins to hide from players. Use '*' to hide all plugins.
 hide_plugins:
-  - pluginName
+   - PluginHider
+   - ProtocolLib
+   - packetevents
 
+# List of plugins to show, even if they would otherwise be hidden.
+# Takes priority over hide_plugins.
 show_plugins:
-  - '*'
+   - 'MySuperCoolPlugin'
 
+# Controls whether plugin commands can be tab-completed with the plugin name prefix.
+# Example: When true, commands can be completed as "pluginname:command"
+# When false, only the command name without the plugin prefix will be shown.
 should_allow_colon_tabcompletion: false
+
+# When true, server operators (ops) can see all plugin commands regardless of hide/show settings.
+# Set to false if you want hiding rules to apply to operators as well.
+operator_can_see_everything: false
+
+# List of operator UUIDs that could see all commands, even when operator_can_see_everything is false.
+# Format: List of player UUIDs
+show_everything_to_these_uuids:
+   - 01234567-89ab-cdef-0123-456789abcdef
 ```
 
-### `hide_plugins`
+### Configuration Guide
 
-Anything written in here will be hidden if it matches the name (case-insensitive)
+#### Basic Concepts:
 
-`*` can be used to denote *all* plugins.
+- `hide_plugins`: List of plugins to hide
+- `show_plugins`: List of plugins to explicitly show
+- `'*'` in `hide_plugins`: Hides all plugins not listed in `show_plugins`
+- `show_plugins` takes priority over `hide_plugins`
 
-### `show_plugins`
+#### Example Scenarios
 
-By default, it is `*` (ie: show all).
+Let's say you have these plugins installed:
 
-However, if you want to show just 1 plugin, you can set `*` in the `hide_plugins` entry, and the specific name in here.
+- pluginA
+- pluginB
+- pluginC
+- pluginD
+- pluginE
 
-### `should_allow_colon_tabcompletion`
+1. **Hide a Single Plugin**  
+   To hide only pluginB:
+   ```yaml
+   hide_plugins:
+     - pluginB
+   ```
+   Result: All plugins except pluginB will be visible
 
-By default, minecraft adds "<pluginname>:" in front of all the commands and allows it to be used that way. However, this is not so nice. So if you set this to
-false (the default), these won't be shown.
+2. **Show Only One Plugin**  
+   To show only pluginB:
+   ```yaml
+   hide_plugins:
+     - '*'
+   show_plugins:
+     - pluginB
+   ```
+   Result: Only pluginB will be visible
 
-The commands can still be executable, they're just not visible anymore.
+3. **Hide Multiple Specific Plugins**  
+   To hide pluginB and pluginD:
+   ```yaml
+   hide_plugins:
+     - pluginB
+     - pluginD
+   ```
+   Result: All plugins except pluginB and pluginD will be visible
+
+4. **Show Only Selected Plugins**  
+   To show only pluginA and pluginC:
+   ```yaml
+   hide_plugins:
+     - '*'
+   show_plugins:
+     - pluginA
+     - pluginC
+   ```
+   Result: Only pluginA and pluginC will be visible
+
+5. **Hide All Plugins**  
+   To hide all plugins except Minecraft/Bukkit commands:
+   ```yaml
+   hide_plugins:
+     - '*'
+   ```
+   Result: Only default Minecraft/Bukkit commands will be visible
+
+6. **Hide Everything Including Minecraft/Bukkit**  
+   To hide absolutely everything:
+   ```yaml
+   hide_plugins:
+     - '*'
+     - minecraft
+     - bukkit
+   ```
+   Result: No commands will be visible at all
+
+### Operator Settings
+
+PluginHider allows you to configure whether operators (and specific players) can see all plugins:
+
+- `operator_can_see_everything`: When true, server operators can see all plugins regardless of hide/show settings
+- `show_everything_to_these_uuids`: Specify UUIDs of players who should see all plugins even when
+  `operator_can_see_everything` is false
+
+### Tab Completion Format
+
+- `should_allow_colon_tabcompletion`: Controls whether plugin commands can be tab-completed with the plugin name
+  prefix (e.g., "pluginname:command")
+
+## Commands
+
+- `/pluginhider help` - Shows available commands
+- `/pluginhider reload` - Reloads the configuration from disk
 
 ## Showcase
 
@@ -51,5 +142,5 @@ The commands can still be executable, they're just not visible anymore.
 ## Links
 
 - **Spigot**: https://www.spigotmc.org/resources/plugin-hider.117705/
-- **bStats**:https://bstats.org/plugin/bukkit/PluginHider/22462
+- **bStats**: https://bstats.org/plugin/bukkit/PluginHider/22462
 - **GitHub**: https://github.com/AvarionMC/PluginHider
