@@ -128,12 +128,21 @@ public class Settings extends YamlFileInterface {
 
     @YamlComment(
             """
-                    List of operator UUIDs that should see all commands, even when operator_can_see_everything is false.
+                    List of operator UUIDs that should see all commands, even when he is not an operator or operator_can_see_everything is false.
                     Format: List of player UUIDs
                     """
     )
-    @YamlKey("show_everything_to_these_uuids")
-    public Set<UUID> uuidsToExplicitlyAllow = Set.of();
+    @YamlKey("whitelisted_uuids")
+    public Set<UUID> whitelist = Set.of();
+
+    @YamlComment(
+            """
+                    List of operator UUIDs that should always be treated as normal users, even when he's an operator and operator_can_see_everything is true.
+                    Format: List of player UUIDs
+                    """
+    )
+    @YamlKey("blacklisted_uuids")
+    public Set<UUID> blacklist = Set.of();
 
     private @NotNull Set<String> makeLowerCase(@Nullable Set<String> entries) {
         if (entries == null) {
@@ -158,7 +167,8 @@ public class Settings extends YamlFileInterface {
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
-        uuidsToExplicitlyAllow = cleanUp(uuidsToExplicitlyAllow);
+        whitelist = cleanUp(whitelist);
+        blacklist = cleanUp(blacklist);
 
         super.save(file);
 

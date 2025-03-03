@@ -44,7 +44,8 @@ public class Config {
         if (player == null) return false;
 
         UUID id = player.getUniqueId();
-        if (settings.uuidsToExplicitlyAllow.contains(id)) return true;
+        if (settings.whitelist.contains(id)) return true;
+        if (settings.blacklist.contains(id)) return false;
 
         return settings.operatorCanSeeEverything && player.isOp();
     }
