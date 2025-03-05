@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.avarion.pluginhider.listener.DeclareCommandsListener;
+import org.avarion.pluginhider.listener.HelpCommandListener;
 import org.avarion.pluginhider.listener.PluginCommandListener;
 import org.avarion.pluginhider.listener.VersionCommandListener;
 import org.avarion.pluginhider.util.*;
@@ -73,7 +74,14 @@ public class PluginHider extends JavaPlugin {
     //region <PacketEvents>
     private void setupPacketEvents() {
         PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
-        PacketEvents.getAPI().getEventManager().registerListeners(new DeclareCommandsListener(), new PluginCommandListener(), new VersionCommandListener());
+        PacketEvents.getAPI()
+                    .getEventManager()
+                    .registerListeners(
+                            new DeclareCommandsListener(),
+                            new PluginCommandListener(),
+                            new VersionCommandListener(),
+                            new HelpCommandListener()
+                    );
 
         Bukkit.getScheduler().runTaskLater(this, PacketEvents.getAPI()::init, 1);
     }
