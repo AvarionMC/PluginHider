@@ -5,14 +5,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class ConstantsTest {
-
     @Test
-    void testIsPluginCmd() {
-        assertFalse(Constants.isPluginCmd("txt"));
+    void testShouldNotHideThisCommand() {
+        assertFalse(Constants.shouldHideThisCommand("txt"));
     }
 
     @Test
-    void testIsVersionCmd() {
-        assertFalse(Constants.isVersionCmd("txt"));
+    void testShouldHideThisCommand() {
+        assertFalse(Constants.shouldHideThisCommand("pl"));
     }
 }

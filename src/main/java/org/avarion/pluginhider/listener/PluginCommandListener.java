@@ -41,7 +41,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
             cmd = "/" + new WrapperPlayClientChatCommandUnsigned(event).getCommand();
         }
 
-        if (Constants.isPluginCmd(cmd)) {
+        if (Constants.shouldHideThisCommand(cmd)) {
             usersSeen.put(player.getUniqueId(), new ReceivedPackets());
         }
     }

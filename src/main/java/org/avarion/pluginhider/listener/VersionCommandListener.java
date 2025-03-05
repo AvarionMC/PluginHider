@@ -30,7 +30,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
         String[] args = event.getMessage().split("\\s+");
 
         String firstArg = args[0].toLowerCase();
-        if (Constants.isVersionCmd(firstArg)) {
+        if (Constants.shouldHideThisCommand(firstArg)) {
             handleVersionCommand(event);
         }
     }
@@ -62,7 +62,7 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
         WrapperPlayClientTabComplete packet = new WrapperPlayClientTabComplete(event);
         final String txt = packet.getText();
 
-        if (Constants.isVersionCmd(txt)) {
+        if (Constants.shouldHideThisCommand(txt)) {
             usersSeen.put(player.getUniqueId(), txt);
         }
     }

@@ -10,17 +10,28 @@ public class Constants {
     public static final int bstatsPluginId = 22462;
     public static final int spigotPluginId = 117705;
 
-    private static final Set<String> possiblePluginCommands = Set.of("/pl", "/plugins", "/minecraft:pl", "/minecraft:plugins", "/bukkit:pl", "/bukkit:plugins");
-    private static final Set<String> possibleVersionCommands = Set.of(
+    private static final Set<String> possibleCommands = Set.of(
+            "/pl",
+            "/plugins",
             "/ver",
             "/version",
             "/about",
+            "/?",
+            "/help",
+            "/minecraft:pl",
+            "/minecraft:plugins",
             "/minecraft:ver",
             "/minecraft:version",
             "/minecraft:about",
+            "/minecraft:?",
+            "/minecraft:help",
+            "/bukkit:pl",
+            "/bukkit:plugins",
             "/bukkit:ver",
             "/bukkit:version",
-            "/bukkit:about"
+            "/bukkit:about",
+            "/bukkit:?",
+            "/bukkit:help"
     );
 
     private static @NotNull String cleanup(@NotNull final String cmd) {
@@ -28,11 +39,7 @@ public class Constants {
         return args[0].toLowerCase(Locale.ENGLISH);
     }
 
-    public static boolean isPluginCmd(final @Nullable String txt) {
-        return txt != null && possiblePluginCommands.contains(cleanup(txt));
-    }
-
-    public static boolean isVersionCmd(final @Nullable String txt) {
-        return txt != null && possibleVersionCommands.contains(cleanup(txt));
+    public static boolean shouldHideThisCommand(final @Nullable String txt) {
+        return txt != null && possibleCommands.contains(cleanup(txt));
     }
 }
