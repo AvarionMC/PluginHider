@@ -6,11 +6,15 @@ import com.github.retrooper.packetevents.protocol.chat.Node;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDeclareCommands;
 import org.avarion.pluginhider.PluginHider;
+import org.avarion.pluginhider.util.Config;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DeclareCommandsListener extends PacketListenerAbstract {
     private static final byte FLAG_HAS_REDIRECT = 0x8;
@@ -35,37 +39,6 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
         filter(internal, internal.rootNode, false);
         internal.packet.setNodes(internal.newList);
         internal.packet.write();
-    }
-
-    private boolean shouldShow(@NotNull String name, Internal data) {
-        if (name.isEmpty()) {
-            return false;
-        }
-
-        name = name.toLowerCase(Locale.ENGLISH);
-        String[] parts = name.split(":", 2);
-
-        String pluginName = null;
-        if (parts.length == 2) { // it has ':'
-            if (!PluginHider.config.getShouldAllowConolOnTabComplete()) {
-                return false;
-            }
-            pluginName = parts[0];
-        }
-        else { // No ':' in it
-            for (var entry : data.pluginToCmd.entrySet()) {
-                if (entry.getValue().contains(name)) {
-                    pluginName = entry.getKey();
-                    break;
-                }
-            }
-        }
-
-        if (pluginName == null) {
-            return true; // ???!!!
-        }
-
-        return PluginHider.config.shouldShow(pluginName);
     }
 
     private boolean hasRedirect(@NotNull Node node) {
@@ -117,7 +90,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             }
 
             final String name = child.getName().orElse("");
-            if (alwaysAdd || shouldShow(name, data)) {
+            if (alwaysAdd || Config.shouldShow(name)) {
                 if (data.indexTranslations.containsKey(idx)) {
                     // Already in the list!
                     newChildren.add(data.indexTranslations.get(idx));
@@ -143,8 +116,8 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
         private final List<Node> nodes;
         private final Node rootNode;
         private final List<Node> newList = new ArrayList<>();
-        private final Map<Integer, Integer> indexTranslations = new HashMap<>(); // Mapping from original index -> new index
-        private final Map<String, Set<String>> pluginToCmd = new HashMap<>(); // Mapping from plugin name -> list of commands
+        private final Map<Integer, Integer> indexTranslations = new HashMap<>();
+        // Mapping from original index -> new index
 
         Internal(PacketSendEvent event) {
             packet = new WrapperPlayServerDeclareCommands(event);
@@ -161,11 +134,8 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                     continue;
                 }
 
-                final String name = nodes.get(idx).getName().orElse("").toLowerCase(Locale.ENGLISH);
-                if (name.contains(":")) {
-                    String[] parts = name.split(":", 2);
-                    pluginToCmd.computeIfAbsent(parts[0], k -> new HashSet<>()).add(parts[1]);
-                }
+                final String name = nodes.get(idx).getName().orElse("");
+                Config.splitPluginName(name); // This handles the storing if it's not registered yet
             }
         }
 

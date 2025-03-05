@@ -6,7 +6,6 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
-import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.exceptions.SectionExpectedException;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -89,7 +88,7 @@ public class ReceivedPackets {
 
         HashMap<net.kyori.adventure.text.TextComponent, List<String>> filtered = new HashMap<>();
         for (var entry : pluginsSeen.entrySet()) {
-            List<String> filteredList = entry.getValue().stream().filter(PluginHider.config::shouldShow).toList();
+            List<String> filteredList = entry.getValue().stream().filter(Config::shouldShow).toList();
 
             if (!filteredList.isEmpty()) {
                 filtered.put(entry.getKey(), filteredList);

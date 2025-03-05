@@ -33,15 +33,18 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        String cmd = null;
+        String cmd;
         if (event.getPacketType() == Client.CHAT_COMMAND) {
             cmd = "/" + new WrapperPlayClientChatCommand(event).getCommand();
         }
         else if (event.getPacketType() == Client.CHAT_COMMAND_UNSIGNED) {
             cmd = "/" + new WrapperPlayClientChatCommandUnsigned(event).getCommand();
         }
+        else {
+            return;
+        }
 
-        if (Constants.shouldHideThisCommand(cmd)) {
+        if (Constants.isPluginCmd(cmd)) {
             usersSeen.put(player.getUniqueId(), new ReceivedPackets());
         }
     }

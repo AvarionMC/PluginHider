@@ -73,9 +73,9 @@ public class PluginHider extends JavaPlugin {
     //region <PacketEvents>
     private void setupPacketEvents() {
         PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
-        //        PacketEvents.getAPI().init();
-
         PacketEvents.getAPI().getEventManager().registerListeners(new DeclareCommandsListener(), new PluginCommandListener(), new VersionCommandListener());
+
+        Bukkit.getScheduler().runTaskLater(this, PacketEvents.getAPI()::init, 1);
     }
 
     private void disableProtocolLib() {
