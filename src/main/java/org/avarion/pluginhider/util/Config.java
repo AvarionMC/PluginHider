@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
+
 public class Config {
     public final static Map<String, Boolean> showCache = new LRUCache<>(1_000);
     public final static Map<String, Boolean> showCachePlugins = new LRUCache<>(1_000);

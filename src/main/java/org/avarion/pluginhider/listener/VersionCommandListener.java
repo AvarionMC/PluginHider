@@ -8,6 +8,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
 public class VersionCommandListener extends CommonVersionHelpClass implements Listener {
 
     void handleCommand(@NotNull PlayerCommandPreprocessEvent event) {

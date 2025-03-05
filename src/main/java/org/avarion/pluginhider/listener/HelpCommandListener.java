@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
+
 public class HelpCommandListener extends PacketListenerAbstract implements Listener {
     void handleCommand(@NotNull PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().trim().split("\\s+", 2);
@@ -62,12 +63,8 @@ public class HelpCommandListener extends PacketListenerAbstract implements Liste
             return true;
         }
 
-        if (Constants.cacheCommand2Plugin.containsKey(sug) && Config.shouldShowPlugin(Constants.cacheCommand2Plugin.get(
-                sug))) {
-            return true;
-        }
-
-        return false;
+        return Constants.cacheCommand2Plugin.containsKey(sug)
+               && Config.shouldShowPlugin(Constants.cacheCommand2Plugin.get(sug));
     }
 
     boolean isCorrectCommand(@Nullable String text) {

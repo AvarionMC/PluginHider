@@ -73,15 +73,18 @@ public class PluginHider extends JavaPlugin {
 
     //region <PacketEvents>
     private void setupPacketEvents() {
-        PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
         PacketEvents.getAPI()
-                    .getEventManager()
-                    .registerListeners(
-                            new DeclareCommandsListener(),
-                            new PluginCommandListener(),
-                            new VersionCommandListener(),
-                            new HelpCommandListener()
-                    );
+                    .getSettings()
+                    .debug(false)
+                    .reEncodeByDefault(true)
+                    .checkForUpdates(false)
+                    .timeStampMode(TimeStampMode.MILLIS);
+        PacketEvents.getAPI().getEventManager().registerListeners(
+                new DeclareCommandsListener(),
+                new PluginCommandListener(),
+                new VersionCommandListener(),
+                new HelpCommandListener()
+        );
 
         Bukkit.getScheduler().runTaskLater(this, PacketEvents.getAPI()::init, 1);
     }

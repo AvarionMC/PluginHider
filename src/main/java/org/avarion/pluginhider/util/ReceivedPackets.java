@@ -118,7 +118,10 @@ public class ReceivedPackets {
         return msg;
     }
 
-    private @NotNull BaseComponent createSecondLine(final @NotNull net.kyori.adventure.text.TextComponent section, int count) {
+    private @NotNull BaseComponent createSecondLine(
+            final @NotNull net.kyori.adventure.text.TextComponent section,
+            int count
+    ) {
         String line = asString(section);
         Matcher match = amountPluginsPattern.matcher(line);
 

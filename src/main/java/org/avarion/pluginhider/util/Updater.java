@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Scanner;
 
+
 public class Updater {
     public static void run() {
         Version lastVersion = getLatestVersion(Constants.spigotPluginId);
@@ -20,7 +21,10 @@ public class Updater {
         }
 
         if (lastVersion.compareTo(PluginHider.inst.currentVersion) < 0) {
-            PluginHider.logger.warning("New version available: " + lastVersion + ", you have: " + PluginHider.inst.currentVersion);
+            PluginHider.logger.warning("New version available: "
+                                       + lastVersion
+                                       + ", you have: "
+                                       + PluginHider.inst.currentVersion);
         }
     }
 
@@ -35,7 +39,8 @@ public class Updater {
             if (scanner.hasNext()) {
                 return new Version(scanner.next());
             }
-        } catch (URISyntaxException | IOException e) {
+        }
+        catch (URISyntaxException | IOException e) {
             Bukkit.getLogger().warning("Couldn't fetch latest version information from SpigotMC: " + e.getMessage());
         }
 

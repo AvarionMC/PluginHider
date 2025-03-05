@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+
 public class Constants {
     public static final int bstatsPluginId = 22462;
     public static final int spigotPluginId = 117705;
@@ -33,12 +34,17 @@ public class Constants {
             "/minecraft:version",
             "/minecraft:about",
             "/bukkit:ver",
-            "/bukkit:version",
-            "/bukkit:about", "/paper:ver", "/paper:version", "/paper:about"
+            "/bukkit:version", "/bukkit:about", "/paper:ver", "/paper:version", "/paper:about"
     );
     private static final Set<String> possibleHelpCommands = Set.of(
-            "/?", "/help", "/minecraft:?", "/minecraft:help",
-            "/bukkit:?", "/bukkit:help", "/paper:?", "/paper:help"
+            "/?",
+            "/help",
+            "/minecraft:?",
+            "/minecraft:help",
+            "/bukkit:?",
+            "/bukkit:help",
+            "/paper:?",
+            "/paper:help"
     );
 
     public static CommandType getCommandType(@Nullable final String cmd) {

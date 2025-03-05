@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+
 public class PluginCommandListener extends PacketListenerAbstract {
     private final LRUCache<UUID, ReceivedPackets> usersSeen = new LRUCache<>(1000);
 

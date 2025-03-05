@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class DeclareCommandsListener extends PacketListenerAbstract {
     private static final byte FLAG_HAS_REDIRECT = 0x8;
 
@@ -138,6 +139,5 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                 Config.splitPluginName(name); // This handles the storing if it's not registered yet
             }
         }
-
     }
 }

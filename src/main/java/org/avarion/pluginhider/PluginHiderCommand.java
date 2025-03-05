@@ -14,10 +14,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
 @FunctionalInterface
 interface CommandAction {
     void execute(CommandSender sender);
 }
+
 
 public class PluginHiderCommand implements TabExecutor {
     private final Map<String, Action> functions = new LinkedHashMap<>();
@@ -28,7 +30,12 @@ public class PluginHiderCommand implements TabExecutor {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String[] args) {
+    public boolean onCommand(
+            @NotNull CommandSender commandSender,
+            @NotNull Command command,
+            @NotNull String s,
+            String[] args
+    ) {
         if (!commandSender.isOp()) {
             commandSender.sendMessage("Unknown command. Type \"/help\" for help.");
             return true;
@@ -89,7 +96,12 @@ public class PluginHiderCommand implements TabExecutor {
     }
 
     @Override
-    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, String @NotNull [] args) {
+    public List<String> onTabComplete(
+            @NotNull CommandSender commandSender,
+            @NotNull Command command,
+            @NotNull String s,
+            String @NotNull [] args
+    ) {
         if (args.length != 1) {
             return null;
         }

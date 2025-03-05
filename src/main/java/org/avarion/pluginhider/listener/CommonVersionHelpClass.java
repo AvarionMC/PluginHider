@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+
 public abstract class CommonVersionHelpClass extends PacketListenerAbstract implements Listener {
     private final LRUCache<UUID, String> usersSeen = new LRUCache<>(1_000);
 

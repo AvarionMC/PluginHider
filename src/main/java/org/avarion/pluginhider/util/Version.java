@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class Version implements Comparable<Version> {
     public final int major;
     public final int minor;
