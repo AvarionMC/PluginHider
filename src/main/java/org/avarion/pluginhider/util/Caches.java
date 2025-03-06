@@ -143,7 +143,7 @@ public class Caches {
         //else if (isInstance(topic, "help.CustomIndexHelpTopic"))
         //else if (isInstance(topic, "help.MultipleCommandAliasHelpTopic"))
         else {
-            throw new IllegalArgumentException("Unknown topic type: " + topic.getClass().getName());
+            PluginHider.logger.error("Unknown topic type: " + topic.getClass().getName());
         }
     }
 

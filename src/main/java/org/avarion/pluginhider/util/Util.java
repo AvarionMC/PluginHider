@@ -38,7 +38,7 @@ public class Util {
 
                     int index = cmd.indexOf(' ');
                     if (index != -1) {
-                        cmd = cmd.substring(0, index);
+                        cmd = cmd.substring(0, index); // First word only
                     }
 
                     return cmd.toLowerCase(Locale.ENGLISH);

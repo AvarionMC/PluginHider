@@ -4,12 +4,14 @@ import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import org.avarion.pluginhider.util.Caches;
+import org.avarion.pluginhider.util.Util;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.help.HelpTopic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -53,6 +55,31 @@ public class HelpCommandListener extends PacketListenerAbstract implements Liste
         }
 
         showHelpPage(event.getPlayer(), 1);
+    }
+
+    private HelpTopic findHelpTopic(@NotNull Player player, @NotNull String section) {
+        int page = 1;
+        String searchFor = "";
+
+        section = section.trim()
+                         .toLowerCase(Locale.ENGLISH); // can't use Util.cleanupCommand here because that returns only the first word!
+        if (section.charAt(0) == '/') {
+            section = section.substring(1).trim();
+        }
+
+        int spaceIdx = section.indexOf(' ');
+        if (spaceIdx != -1) {
+            String nextWord = Util.cleanupCommand(section.substring(spaceIdx + 1));
+            if (!nextWord.isEmpty()) {
+                try {
+                    page = Integer.parseInt(nextWord);
+                }
+                catch (NumberFormatException e) {
+                    searchFor = nextWord;
+                }
+            }
+        }
+        return null;
     }
 
     private void handleHelpCommand(@NotNull Player player, final @NotNull String command) {
