@@ -49,7 +49,7 @@ public class CustomVersionCommand extends VersionCommand implements MyCustomComm
                 StringBuilder name = new StringBuilder();
 
                 for (String arg : args) {
-                    if (name.length() > 0) {
+                    if (!name.isEmpty()) {
                         name.append(' ');
                     }
 
@@ -107,8 +107,7 @@ public class CustomVersionCommand extends VersionCommand implements MyCustomComm
 
             return completions;
         }
-        else {
-            return ImmutableList.of();
-        }
+
+        return ImmutableList.of();
     }
 }

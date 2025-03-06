@@ -44,13 +44,16 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
     private String getPluginList(@NotNull CommandSender sender) {
         StringBuilder pluginList = new StringBuilder();
         Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
+        int pluginCount = 0;
 
         for (Plugin plugin : plugins) {
             if (!isAllowedPlugin(sender, plugin.getName())) {
                 continue;
             }
 
-            if (pluginList.length() > 0) {
+            pluginCount++;
+
+            if (!pluginList.isEmpty()) {
                 pluginList.append(ChatColor.WHITE);
                 pluginList.append(", ");
             }
@@ -62,6 +65,6 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
             }
         }
 
-        return "(" + plugins.length + "): " + pluginList;
+        return "(" + pluginCount + "): " + pluginList;
     }
 }

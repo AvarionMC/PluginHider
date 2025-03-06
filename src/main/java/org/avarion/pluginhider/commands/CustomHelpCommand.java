@@ -117,7 +117,7 @@ public class CustomHelpCommand extends HelpCommand implements MyCustomCommand {
 
     @Contract("_, null -> false")
     protected boolean isAllowed(@NotNull CommandSender sender, @Nullable HelpTopic topic) {
-        if (topic == null) {
+        if (topic == null || !topic.canSee(sender)) {
             return false;
         }
 
@@ -197,29 +197,39 @@ public class CustomHelpCommand extends HelpCommand implements MyCustomCommand {
 
             return matchedTopics;
         }
-        else {
-            return ImmutableList.of();
-        }
+
+        return ImmutableList.of();
     }
 
     @Nullable
     protected HelpTopic findPossibleMatches(@NotNull CommandSender sender, @NotNull String searchString) {
-        int maxDistance = searchString.length() / 5 + 3;
-        Set<HelpTopic> possibleMatches = new TreeSet<>(HelpTopicComparator.helpTopicComparatorInstance());
+        int maxDistance = (searchString.length() / 5) + 3;
+        Set<HelpTopic> possibleMatches = new TreeSet<HelpTopic>(HelpTopicComparator.helpTopicComparatorInstance());
+
         if (searchString.startsWith("/")) {
             searchString = searchString.substring(1);
         }
 
+        if (searchString.isEmpty()) {
+            return null; // Paper - prevent index out of bounds - nothing matches an empty search string, should have been special cased to defaultTopic earlier, just return null.
+        }
         for (HelpTopic topic : Bukkit.getServer().getHelpMap().getHelpTopics()) {
             if (!isAllowed(sender, topic)) {
                 continue;
             }
 
             String trimmedTopic = topic.getName().startsWith("/") ? topic.getName().substring(1) : topic.getName();
-            if (trimmedTopic.length() >= searchString.length()
-                && Character.toLowerCase(trimmedTopic.charAt(0)) == Character.toLowerCase(searchString.charAt(0))
-                && damerauLevenshteinDistance(searchString, trimmedTopic.substring(0, searchString.length()))
-                   < maxDistance) {
+
+            if (trimmedTopic.length() < searchString.length()) {
+                continue;
+            }
+
+            if (Character.toLowerCase(trimmedTopic.charAt(0)) != Character.toLowerCase(searchString.charAt(0))) {
+                continue;
+            }
+
+            if (damerauLevenshteinDistance(searchString, trimmedTopic.substring(0, searchString.length()))
+                < maxDistance) {
                 possibleMatches.add(topic);
             }
         }
