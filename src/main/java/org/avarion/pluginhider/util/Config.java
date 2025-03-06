@@ -82,6 +82,9 @@ public class Config {
         return new String[]{null, parts[0]};
     }
 
+    /**
+     * Expected `pluginName` to be trimmed & lowered
+     */
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
         return showCachePlugins.computeIfAbsent(
                 pluginName, k -> {
@@ -94,6 +97,9 @@ public class Config {
                     }
                     if (settings.hidePlugins.contains(k)) {
                         return false; // explicitly hidden
+                    }
+                    if (Constants.servers.contains(k)) {
+                        return true;
                     }
 
                     return !hideAll; // if all plugins are hidden;

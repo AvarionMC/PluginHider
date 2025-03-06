@@ -1,6 +1,5 @@
 package org.avarion.pluginhider.listener;
 
-import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
@@ -9,37 +8,51 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTa
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.LRUCache;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 
-public abstract class CommonVersionHelpClass extends PacketListenerAbstract implements Listener {
+public class CommonVersionHelpClass {
     private final LRUCache<UUID, String> usersSeen = new LRUCache<>(1_000);
+    private final LRUCache<String, String> cache = new LRUCache<>(1_000);
 
-    abstract boolean isCorrectCommand(@Nullable String text);
+    private final Function<@NotNull String, Boolean> isCorrectCommand;
+    private final Function<@NotNull String, Boolean> shouldShow;
+    private final Consumer<@NotNull PlayerCommandPreprocessEvent> handleCommand;
 
-    abstract boolean shouldShow(@Nullable String text);
+    CommonVersionHelpClass(
+            Function<@NotNull String, Boolean> isCorrectCommand,
+            Function<@NotNull String, Boolean> shouldShow,
+            Consumer<@NotNull PlayerCommandPreprocessEvent> handleCommand
+    ) {
+        this.isCorrectCommand = isCorrectCommand;
+        this.shouldShow = shouldShow;
+        this.handleCommand = handleCommand;
+    }
 
-    abstract void handleCommand(@NotNull PlayerCommandPreprocessEvent event);
+    @NotNull String cleanup(@NotNull final String text) {
+        return cache.computeIfAbsent(
+                text, t -> {
+                    return t.trim().toLowerCase(Locale.ENGLISH);
+                }
+        );
+    }
 
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().split("\\s+");
 
-        if (isCorrectCommand(args[0])) {
-            handleCommand(event);
+        if (args[0] != null && isCorrectCommand.apply(cleanup(args[0]))) {
+            handleCommand.accept(event);
         }
     }
 
-    @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
         if (!(event.getPlayer() instanceof Player player)
             || PluginHider.config.isOpLike(player)
@@ -50,12 +63,11 @@ public abstract class CommonVersionHelpClass extends PacketListenerAbstract impl
         WrapperPlayClientTabComplete packet = new WrapperPlayClientTabComplete(event);
 
         final String txt = packet.getText();
-        if (isCorrectCommand(txt)) {
+        if (txt != null && isCorrectCommand.apply(cleanup(txt))) {
             usersSeen.put(player.getUniqueId(), txt);
         }
     }
 
-    @Override
     public void onPacketSend(@NotNull PacketSendEvent event) {
         if (event.getPacketType() != PacketType.Play.Server.TAB_COMPLETE) {
             return;
@@ -75,7 +87,8 @@ public abstract class CommonVersionHelpClass extends PacketListenerAbstract impl
         List<WrapperPlayServerTabComplete.CommandMatch> newSuggestions = new ArrayList<>();
 
         for (WrapperPlayServerTabComplete.CommandMatch suggestion : suggestions) {
-            if (shouldShow(suggestion.getText())) {
+            String sug = suggestion.getText();
+            if (sug != null && shouldShow.apply(cleanup(sug))) {
                 newSuggestions.add(suggestion);
             }
         }

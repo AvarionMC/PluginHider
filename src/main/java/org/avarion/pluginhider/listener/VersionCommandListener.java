@@ -1,15 +1,39 @@
 package org.avarion.pluginhider.listener;
 
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
 import org.avarion.pluginhider.util.Config;
 import org.avarion.pluginhider.util.Constants;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
-public class VersionCommandListener extends CommonVersionHelpClass implements Listener {
+public class VersionCommandListener extends PacketListenerAbstract implements Listener {
+    private final CommonVersionHelpClass common;
+
+    public VersionCommandListener() {
+        common = new CommonVersionHelpClass(this::isCorrectCommand, this::shouldShow, this::handleCommand);
+    }
+
+    @Override
+    public void onPacketReceive(@NotNull PacketReceiveEvent event) {
+        common.onPacketReceive(event);
+    }
+
+    @Override
+    public void onPacketSend(@NotNull PacketSendEvent event) {
+        common.onPacketSend(event);
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
+        common.onCommand(event);
+    }
 
     void handleCommand(@NotNull PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().split("\\s+");
@@ -30,11 +54,11 @@ public class VersionCommandListener extends CommonVersionHelpClass implements Li
         }
     }
 
-    boolean isCorrectCommand(@Nullable String text) {
+    boolean isCorrectCommand(@NotNull String text) {
         return Constants.isVersionCmd(text);
     }
 
-    boolean shouldShow(@Nullable String text) {
+    boolean shouldShow(@NotNull String text) {
         return Config.shouldShowPlugin(text);
     }
 }

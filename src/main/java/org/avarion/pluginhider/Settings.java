@@ -1,14 +1,15 @@
 package org.avarion.pluginhider;
 
-import com.google.common.collect.ImmutableSet;
-import org.avarion.pluginhider.util.Constants;
 import org.avarion.yaml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -168,21 +169,11 @@ public class Settings extends YamlFileInterface {
         T loaded = super.load(file);
 
         hidePlugins = makeLowerCase(hidePlugins);
-        showPlugins = new HashSet<>(makeLowerCase(showPlugins));
+        showPlugins = makeLowerCase(showPlugins);
         whitelist = cleanUp(whitelist);
         blacklist = cleanUp(blacklist);
 
-        // First save
         super.save(file);
-
-        // Then adjust the hide/show list
-        for (String generic : Constants.servers) {
-            if (!hidePlugins.contains(generic)) {
-                showPlugins.add(generic);
-            }
-        }
-
-        showPlugins = ImmutableSet.copyOf(showPlugins);
 
         return loaded;
     }

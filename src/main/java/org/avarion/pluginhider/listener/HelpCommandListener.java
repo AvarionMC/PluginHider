@@ -1,9 +1,13 @@
 package org.avarion.pluginhider.listener;
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
 import org.avarion.pluginhider.util.Config;
 import org.avarion.pluginhider.util.Constants;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +17,27 @@ import java.util.Locale;
 
 
 public class HelpCommandListener extends PacketListenerAbstract implements Listener {
+    private final CommonVersionHelpClass common;
+
+    public HelpCommandListener() {
+        common = new CommonVersionHelpClass(this::isCorrectCommand, this::shouldShow, this::handleCommand);
+    }
+
+    @Override
+    public void onPacketReceive(@NotNull PacketReceiveEvent event) {
+        common.onPacketReceive(event);
+    }
+
+    @Override
+    public void onPacketSend(@NotNull PacketSendEvent event) {
+        common.onPacketSend(event);
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
+        common.onCommand(event);
+    }
+
     void handleCommand(@NotNull PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().trim().split("\\s+", 2);
         if (args.length > 1) {
