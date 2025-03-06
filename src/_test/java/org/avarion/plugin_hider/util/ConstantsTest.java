@@ -8,11 +8,11 @@ class ConstantsTest {
 
     @Test
     void testIsPluginCmd() {
-        assertFalse(Constants.isPluginCmd("txt"));
+        assertFalse(Caches.isPluginCmd("txt"));
     }
 
     @Test
     void testIsVersionCmd() {
-        assertFalse(Constants.isVersionCmd("txt"));
+        assertFalse(Caches.isVersionCmd("txt"));
     }
 }

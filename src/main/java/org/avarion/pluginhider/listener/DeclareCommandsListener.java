@@ -6,15 +6,12 @@ import com.github.retrooper.packetevents.protocol.chat.Node;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDeclareCommands;
 import org.avarion.pluginhider.PluginHider;
-import org.avarion.pluginhider.util.Config;
+import org.avarion.pluginhider.util.Caches;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class DeclareCommandsListener extends PacketListenerAbstract {
@@ -91,7 +88,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             }
 
             final String name = child.getName().orElse("");
-            if (alwaysAdd || Config.shouldShow(name)) {
+            if (alwaysAdd || Caches.shouldShow(name)) {
                 if (data.indexTranslations.containsKey(idx)) {
                     // Already in the list!
                     newChildren.add(data.indexTranslations.get(idx));
@@ -136,7 +133,8 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                 }
 
                 final String name = nodes.get(idx).getName().orElse("");
-                Config.splitPluginName(name); // This handles the storing if it's not registered yet
+                var res = Caches.splitPluginName(name); // This handles the storing if it's not registered yet
+                PluginHider.logger.info("res: " + Arrays.toString(res));
             }
         }
     }

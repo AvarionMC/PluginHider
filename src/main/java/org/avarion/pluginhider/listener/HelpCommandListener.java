@@ -3,8 +3,7 @@ package org.avarion.pluginhider.listener;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
-import org.avarion.pluginhider.util.Config;
-import org.avarion.pluginhider.util.Constants;
+import org.avarion.pluginhider.util.Caches;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -74,21 +73,21 @@ public class HelpCommandListener extends PacketListenerAbstract implements Liste
         // The "/help" command receives both <plugin>, <plugin>:<command> & <command>!
         int idx = suggestion.indexOf(':');
         if (idx != -1) {
-            return Config.shouldShow(suggestion.substring(0, idx));
+            return Caches.shouldShow(suggestion.substring(0, idx));
         }
 
-        if (Config.showCachePlugins.containsKey(suggestion)) {
-            return Config.shouldShowPlugin(suggestion);
+        if (Caches.showCachePlugins.containsKey(suggestion)) {
+            return Caches.shouldShowPlugin(suggestion);
         }
 
-        if (Constants.cacheCommand2Plugin.containsKey(suggestion)) {
-            return Config.shouldShowPlugin(Constants.cacheCommand2Plugin.get(suggestion));
+        if (Caches.cacheCommand2Plugin.containsKey(suggestion)) {
+            return Caches.shouldShowPlugin(Caches.cacheCommand2Plugin.get(suggestion));
         }
 
         return true;
     }
 
     boolean isCorrectCommand(@NotNull String text) {
-        return Constants.isHelpCmd(text);
+        return Caches.isHelpCmd(text);
     }
 }

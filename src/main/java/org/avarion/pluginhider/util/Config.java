@@ -3,20 +3,16 @@ package org.avarion.pluginhider.util;
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.Settings;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Locale;
 import java.util.UUID;
 
 
 public class Config {
-    public final static Map<String, Boolean> showCache = new LRUCache<>(1_000);
-    public final static Map<String, Boolean> showCachePlugins = new LRUCache<>(1_000);
     private final File configLocation;
     private final static Settings settings = new Settings();
     private static boolean hideAll = false;
@@ -34,7 +30,7 @@ public class Config {
             PluginHider.logger.error("Failed to load config.yml: " + e.getMessage());
         }
 
-        showCache.clear();
+        Caches.showCache.clear();
 
         hideAll = settings.hidePlugins.contains("*");
     }
@@ -59,77 +55,49 @@ public class Config {
         return settings.shouldAllowColonTabcompletion;
     }
 
-    @Contract("null -> new")
-    public static String @NotNull [] splitPluginName(@Nullable final String pluginName) {
-        if (pluginName == null || pluginName.isBlank()) {
-            return new String[]{
-                    null, null
-            };
+    public boolean shouldShowPluginCleaned(@NotNull final String cleaned) {
+        if (settings.showPlugins.contains(cleaned)) {
+            return true; // explicitly shown -- remember that `servers` are automagically added in Settings::load!
+        }
+        if (settings.hidePlugins.contains(cleaned)) {
+            return false; // explicitly hidden
+        }
+        if (Constants.servers.contains(cleaned)) {
+            return true;
         }
 
-        String cleaned = pluginName.toLowerCase().trim().split("\\s+", 2)[0];
+        return !hideAll; // if all plugins are hidden;
+    }
 
-        String[] parts = cleaned.split(":", 2);
-        if (parts.length == 2) {
-            final String plugin = parts[0];
-            final String cmd = parts[1];
-            Constants.cacheCommand2Plugin.putIfAbsent(cmd, plugin);
-            Constants.cachePlugin2Commands.computeIfAbsent(plugin, p -> new HashSet<>()).add(cmd);
-            return parts;
+    public boolean shouldShowPlugin(@Nullable final String pluginName) {
+        if (pluginName == null) {
+            return false;
         }
 
-        return new String[]{null, parts[0]};
+        String cleaned = pluginName.toLowerCase(Locale.ENGLISH).trim();
+        return shouldShowPluginCleaned(cleaned);
     }
 
-    /**
-     * Expected `pluginName` to be trimmed & lowered
-     */
-    public static boolean shouldShowPlugin(@Nullable final String pluginName) {
-        return showCachePlugins.computeIfAbsent(
-                pluginName, k -> {
-                    if (k == null) {
-                        return false;
-                    }
+    public boolean shouldShow(@Nullable final String pluginName) {
+        String[] parts = Caches.splitPluginName(pluginName);
+        if (parts[1] == null) { // Unknown command
+            return false;
+        }
 
-                    if (settings.showPlugins.contains(k)) {
-                        return true; // explicitly shown -- remember that `servers` are automagically added in Settings::load!
-                    }
-                    if (settings.hidePlugins.contains(k)) {
-                        return false; // explicitly hidden
-                    }
-                    if (Constants.servers.contains(k)) {
-                        return true;
-                    }
+        String trueName = parts[0];
+        if (trueName != null) {
+            if (!PluginHider.config.getShouldAllowConolOnTabComplete()) {
+                return false;
+            }
+        }
+        else {
+            trueName = Caches.cacheCommand2Plugin.getOrDefault(parts[1], null);
+            if (trueName == null) {
+                PluginHider.logger.info("shouldShow didn't knew what '" + pluginName + "' is?");
+                return true;
+            }
+        }
 
-                    return !hideAll; // if all plugins are hidden;
-                }
-        );
-    }
-
-    public static boolean shouldShow(@Nullable final String pluginName) {
-        return showCache.computeIfAbsent(
-                pluginName, k -> {
-                    String[] parts = splitPluginName(pluginName);
-                    if (parts[1] == null) { // Unknown command
-                        return false;
-                    }
-
-                    String trueName = parts[0];
-                    if (trueName != null) {
-                        if (!PluginHider.config.getShouldAllowConolOnTabComplete()) {
-                            return false;
-                        }
-                    }
-                    else {
-                        trueName = Constants.cacheCommand2Plugin.getOrDefault(parts[1], null);
-                        if (trueName == null) {
-                            PluginHider.logger.info("shouldShow didn't knew what '" + pluginName + "' is?");
-                            return true;
-                        }
-                    }
-
-                    return shouldShowPlugin(trueName);
-                }
-        );
+        return shouldShowPluginCleaned(trueName);
     }
 }

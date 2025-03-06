@@ -3,7 +3,7 @@ package org.avarion.pluginhider;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.avarion.pluginhider.util.Config;
+import org.avarion.pluginhider.util.Caches;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -100,12 +100,14 @@ public class PluginHiderCommand implements TabExecutor {
     public void dump(CommandSender commandSender) {
         PluginHider.logger.info("----------------------------------------");
         PluginHider.logger.info("Dumping plugin hider `showCachePlugins`:");
-        for (var entry : Config.showCachePlugins.entrySet()) {
+        PluginHider.logger.info("*** size: " + Caches.showCachePlugins.size());
+        for (var entry : Caches.showCachePlugins.entrySet()) {
             PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
         }
         PluginHider.logger.info("----------------------------------------");
         PluginHider.logger.info("Dumping plugin hider `showCache`:");
-        for (var entry : Config.showCache.entrySet()) {
+        PluginHider.logger.info("*** size: " + Caches.showCache.size());
+        for (var entry : Caches.showCache.entrySet()) {
             PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
         }
         PluginHider.logger.info("----------------------------------------");

@@ -88,7 +88,17 @@ public class ReceivedPackets {
 
         HashMap<net.kyori.adventure.text.TextComponent, List<String>> filtered = new HashMap<>();
         for (var entry : pluginsSeen.entrySet()) {
-            List<String> filteredList = entry.getValue().stream().filter(Config::shouldShow).toList();
+            List<String> filteredList = new ArrayList<>();
+            for (String s : entry.getValue()) {
+                boolean hasStar = s.charAt(0) == '*';
+                if (hasStar) {
+                    s = s.substring(1);
+                }
+
+                if (Caches.shouldShowPlugin(s)) {
+                    filteredList.add((hasStar ? "*" : "") + s);
+                }
+            }
 
             if (!filteredList.isEmpty()) {
                 filtered.put(entry.getKey(), filteredList);
@@ -151,7 +161,10 @@ public class ReceivedPackets {
 
             TextComponent tmp = new TextComponent(pluginName);
             tmp.setColor(pl != null && pl.isEnabled() ? ChatColor.GREEN : ChatColor.RED);
-            tmp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/version " + pluginName));
+            tmp.setClickEvent(new ClickEvent(
+                    ClickEvent.Action.RUN_COMMAND,
+                    "/version " + (pluginName.charAt(0) == '*' ? pluginName.substring(1) : pluginName)
+            ));
             msg.addExtra(tmp);
 
             isFirst = false;

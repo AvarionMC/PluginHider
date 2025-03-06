@@ -11,7 +11,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSy
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.avarion.pluginhider.PluginHider;
-import org.avarion.pluginhider.util.Constants;
+import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.LRUCache;
 import org.avarion.pluginhider.util.ReceivedPackets;
 import org.bukkit.entity.Player;
@@ -44,7 +44,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        if (Constants.isPluginCmd(cmd)) {
+        if (Caches.isPluginCmd(cmd)) {
             usersSeen.put(player.getUniqueId(), new ReceivedPackets());
         }
     }

@@ -3,8 +3,7 @@ package org.avarion.pluginhider.listener;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
-import org.avarion.pluginhider.util.Config;
-import org.avarion.pluginhider.util.Constants;
+import org.avarion.pluginhider.util.Caches;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -55,10 +54,10 @@ public class VersionCommandListener extends PacketListenerAbstract implements Li
     }
 
     boolean isCorrectCommand(@NotNull String text) {
-        return Constants.isVersionCmd(text);
+        return Caches.isVersionCmd(text);
     }
 
     boolean shouldShow(@NotNull String text) {
-        return Config.shouldShowPlugin(text);
+        return Caches.shouldShowPlugin(text);
     }
 }
