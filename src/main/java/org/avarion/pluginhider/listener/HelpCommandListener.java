@@ -3,17 +3,13 @@ package org.avarion.pluginhider.listener;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
-import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Caches;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -75,18 +71,17 @@ public class HelpCommandListener extends PacketListenerAbstract implements Liste
 
     private boolean shouldShow(@NotNull String argument) {
         // The "/help" command receives both <plugin>, <plugin>:<command> & <command>!
-        PluginHider.logger.info("Showing help for " + argument);
-        int idx = argument.indexOf(':');
-        if (idx != -1) {
-            return Caches.shouldShowPlugin(argument.substring(0, idx));
+        if ("aliases".equals(argument)) {
+            return true; // Special case...
         }
 
-        Plugin plugin = Bukkit.getPluginManager().getPlugin(argument);
-        PluginCommand cmd = Bukkit.getPluginCommand(argument);
+        boolean isCommand = Caches.isInCommandCache(argument);
+        if (isCommand && Caches.shouldShowCommand(argument)) {
+            return true;
+        }
 
-        return (cmd != null && Caches.shouldShowPlugin(cmd.getPlugin().getName().toLowerCase(Locale.ENGLISH))) || (
-                plugin != null && Caches.shouldShowPlugin(argument)
-        );
+        boolean isPlugin = Caches.isInPluginCache(argument);
+        return isPlugin && Caches.shouldShowPlugin(argument);
     }
 
     boolean isCorrectCommand(@NotNull String text) {

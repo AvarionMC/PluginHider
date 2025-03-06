@@ -81,20 +81,22 @@ public class Caches {
 
     @Contract(pure = true)
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
-        if (pluginName == null) {
-            return false;
-        }
+        return shouldShowPlugin.getOrDefault(Util.cleanupCommand(pluginName), false);
+    }
 
-        return shouldShowPlugin.getOrDefault(pluginName.toLowerCase(Locale.ENGLISH), false);
+    @Contract(pure = true)
+    public static boolean isInPluginCache(@Nullable final String pluginName) {
+        return shouldShowPlugin.containsKey(Util.cleanupCommand(pluginName));
     }
 
     @Contract(pure = true)
     public static boolean shouldShowCommand(@Nullable final String command) {
-        if (command == null) {
-            return false;
-        }
+        return shouldShowCmd.getOrDefault(Util.cleanupCommand(command), false);
+    }
 
-        return shouldShowCmd.getOrDefault(command.toLowerCase(Locale.ENGLISH), false);
+    @Contract(pure = true)
+    public static boolean isInCommandCache(@Nullable final String command) {
+        return shouldShowCmd.containsKey(Util.cleanupCommand(command));
     }
 
     private static void registerCommand(Command command, @NotNull Map<String, Command> cmd2Command) {
