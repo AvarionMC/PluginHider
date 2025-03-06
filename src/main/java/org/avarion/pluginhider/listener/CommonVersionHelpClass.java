@@ -44,29 +44,25 @@ public class CommonVersionHelpClass {
     }
 
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        if (!(event.getPlayer() instanceof Player)) {
+        if (event.getPacketType() != PacketType.Play.Client.TAB_COMPLETE || !(event.getPlayer() instanceof Player)) {
             return;
         }
 
         Player player = event.getPlayer();
-        if (PluginHider.settings.isOpLike(player) || event.getPacketType() != PacketType.Play.Client.TAB_COMPLETE) {
+        if (PluginHider.settings.isOpLike(player)) {
             return;
         }
 
         WrapperPlayClientTabComplete packet = new WrapperPlayClientTabComplete(event);
 
-        final String txt = Util.cleanupCommand(packet.getText());
+        final String txt = Util.cleanupWord(packet.getText()); // Need to keep the '/' !
         if (isCorrectCommand.apply(txt)) {
             usersSeen.put(player.getUniqueId(), txt);
         }
     }
 
     public void onPacketSend(@NotNull PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.TAB_COMPLETE) {
-            return;
-        }
-
-        if (!(event.getPlayer() instanceof Player)) {
+        if (event.getPacketType() != PacketType.Play.Server.TAB_COMPLETE || !(event.getPlayer() instanceof Player)) {
             return;
         }
 
