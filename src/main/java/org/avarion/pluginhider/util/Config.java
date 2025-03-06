@@ -2,7 +2,6 @@ package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.Settings;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public class Config {
             settings.load(configLocation);
         }
         catch (IOException e) {
-            Bukkit.getLogger().severe("Failed to load config.yml: " + e.getMessage());
+            PluginHider.logger.error("Failed to load config.yml: " + e.getMessage());
         }
 
         showCache.clear();
@@ -75,7 +74,7 @@ public class Config {
             final String plugin = parts[0];
             final String cmd = parts[1];
             Constants.cacheCommand2Plugin.putIfAbsent(cmd, plugin);
-            Constants.cachePlugin2Commands.computeIfAbsent(parts[0], p -> new HashSet<>()).add(cmd);
+            Constants.cachePlugin2Commands.computeIfAbsent(plugin, p -> new HashSet<>()).add(cmd);
             return parts;
         }
 

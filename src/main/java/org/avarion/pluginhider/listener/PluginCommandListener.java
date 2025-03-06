@@ -14,7 +14,6 @@ import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Constants;
 import org.avarion.pluginhider.util.LRUCache;
 import org.avarion.pluginhider.util.ReceivedPackets;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +21,7 @@ import java.util.UUID;
 
 
 public class PluginCommandListener extends PacketListenerAbstract {
-    private final LRUCache<UUID, ReceivedPackets> usersSeen = new LRUCache<>(1000);
+    private final LRUCache<UUID, ReceivedPackets> usersSeen = new LRUCache<>(1_000);
 
     @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
@@ -72,7 +71,7 @@ public class PluginCommandListener extends PacketListenerAbstract {
 
         Component text = new WrapperPlayServerSystemChatMessage(event).getMessage();
         if (!(text instanceof TextComponent tc)) {
-            Bukkit.getLogger().severe("Invalid system chat message type received (" + text.getClass().getName() + ")");
+            PluginHider.logger.error("Invalid system chat message type received (" + text.getClass().getName() + ")");
             usersSeen.remove(uuid);
             event.setCancelled(true);
             return;

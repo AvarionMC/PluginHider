@@ -35,9 +35,8 @@ public class PluginHider extends JavaPlugin {
         setupBStats();
         setupConfig();
 
-        addListeners();
         addCommands();
-        setupPacketEvents();
+        setupListeners();
 
         logger.info("Loaded version: " + currentVersion);
         startUpdateCheck();
@@ -72,19 +71,23 @@ public class PluginHider extends JavaPlugin {
     //endregion
 
     //region <PacketEvents>
-    private void setupPacketEvents() {
+    private void setupListeners() {
         PacketEvents.getAPI()
                     .getSettings()
                     .debug(false)
                     .reEncodeByDefault(true)
                     .checkForUpdates(false)
                     .timeStampMode(TimeStampMode.MILLIS);
+
+        var version = new VersionCommandListener();
+        var help = new HelpCommandListener();
+
         PacketEvents.getAPI().getEventManager().registerListeners(
                 new DeclareCommandsListener(),
-                new PluginCommandListener(),
-                new VersionCommandListener(),
-                new HelpCommandListener()
+                new PluginCommandListener(), version, help
         );
+        Bukkit.getPluginManager().registerEvents(version, this);
+        Bukkit.getPluginManager().registerEvents(help, this);
 
         Bukkit.getScheduler().runTaskLater(this, PacketEvents.getAPI()::init, 1);
     }
@@ -99,13 +102,9 @@ public class PluginHider extends JavaPlugin {
 
     //region <check for update>
     private void startUpdateCheck() {
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> Updater.run());
+        Bukkit.getScheduler().runTaskAsynchronously(this, Updater::run);
     }
     //endregion
-
-    private void addListeners() {
-        Bukkit.getPluginManager().registerEvents(new VersionCommandListener(), this);
-    }
 
     private void addCommands() {
         PluginCommand cmd = getCommand("pluginhider");
