@@ -21,13 +21,24 @@ public class Caches {
     private Caches() {
     }
 
-    public final static Map<String, Boolean> showCache = new LRUCache<>(1_000);
-    public final static Map<String, Boolean> showCachePlugins = new LRUCache<>(1_000);
-    public final static Map<String, String> cacheCommand2Plugin = new HashMap<>();
-    public final static Map<String, Set<String>> cachePlugin2Commands = new HashMap<>();
+    private final static Map<String, Boolean> shouldShowCmd = new HashMap<>();
+    private final static Map<String, Boolean> shouldShowPlugin = new HashMap<>();
+    private final static Map<String, String> cacheCommand2Plugin = new HashMap<>();
+    private final static Map<String, Set<String>> cachePlugin2Commands = new HashMap<>();
 
     private static boolean isLoaded = false;
     private static final LRUCache<String, CommandType> commandsCache = new LRUCache<>(1_000);
+
+    private static final Map<String, String> defaultPackageNames = Map.of(
+            "io.papermc",
+            "paper",
+            "org.bukkit",
+            "bukkit",
+            "co.aikar",
+            "bukkit",
+            "org.spigotmc",
+            "spigot"
+    );
 
     public static CommandType getCommandType(@Nullable final String cmd) {
         return commandsCache.computeIfAbsent(
@@ -40,8 +51,6 @@ public class Caches {
                     if (firstSpace != -1) {
                         k = k.substring(0, firstSpace);
                     }
-
-                    PluginCommand cmd2 = Bukkit.getPluginCommand(k);
 
                     k = k.toLowerCase(Locale.ENGLISH);
                     if (Constants.possiblePluginCommands.contains(k)) {
@@ -70,111 +79,223 @@ public class Caches {
         return getCommandType(txt) == CommandType.HELP;
     }
 
-    @Contract("null -> new")
-    public static String @NotNull [] splitPluginName(@Nullable final String pluginName) {
-        if (pluginName == null || pluginName.isBlank()) {
-            return new String[]{
-                    null, null
-            };
-        }
-
-        String cleaned = pluginName.toLowerCase().trim().split("\\s+", 2)[0];
-
-        String[] parts = cleaned.split(":", 2);
-        if (parts.length == 2) {
-            final String plugin = parts[0];
-            final String cmd = parts[1];
-            cacheCommand2Plugin.putIfAbsent(cmd, plugin);
-            cachePlugin2Commands.computeIfAbsent(plugin, p -> new HashSet<>()).add(cmd);
-            return parts;
-        }
-
-        return new String[]{null, parts[0]};
-    }
-
-    /**
-     * Expected `pluginName` to be trimmed & lowered
-     */
+    @Contract(pure = true)
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
-        return Caches.showCachePlugins.computeIfAbsent(pluginName, PluginHider.config::shouldShowPlugin);
+        if (pluginName == null) {
+            return false;
+        }
+
+        return shouldShowPlugin.getOrDefault(pluginName.toLowerCase(Locale.ENGLISH), false);
     }
 
-    public static boolean shouldShow(@Nullable final String pluginName) {
-        return Caches.showCache.computeIfAbsent(pluginName, PluginHider.config::shouldShow);
+    @Contract(pure = true)
+    public static boolean shouldShowCommand(@Nullable final String command) {
+        if (command == null) {
+            return false;
+        }
+
+        return shouldShowCmd.getOrDefault(command.toLowerCase(Locale.ENGLISH), false);
     }
 
-    private static void registerCommand(Command command) {
-        int a = 1;
+    private static void registerCommand(Command command, @NotNull Map<String, Command> cmd2Command) {
+        cmd2Command.putIfAbsent(Util.cleanupCommand(command.getName()), command);
+
+        for (String fieldName : Arrays.asList("aliases", "activeAliases")) {
+            @SuppressWarnings("unchecked") List<String> aliases = (List<String>) ReflectionUtils.getFieldValue(
+                    command,
+                    fieldName,
+                    List.class
+            );
+            for (String alias : aliases) {
+                cmd2Command.putIfAbsent(Util.cleanupCommand(alias), command);
+            }
+        }
     }
 
-    private static void registerTopic(HelpTopic topic) {
-        if (topic instanceof IndexHelpTopic indexTopic) {
+    private static void registerTopic(
+            HelpTopic topic,
+            Map<String, Set<String>> aliases,
+            Map<String, Command> cmd2Command
+    ) {
+        if (topic instanceof IndexHelpTopic) {
             @SuppressWarnings("unchecked") Collection<HelpTopic> allTopics = ReflectionUtils.getFieldValue(
-                    indexTopic,
+                    topic,
                     "allTopics",
                     Collection.class
             );
             for (var topic2 : allTopics) {
-                registerTopic(topic2);
+                registerTopic(topic2, aliases, cmd2Command);
             }
         }
-        else if (topic instanceof GenericCommandHelpTopic genericTopic) {
-            Command cmd = ReflectionUtils.getFieldValue(genericTopic, "command", Command.class);
-            registerCommand(cmd);
+        else if (topic instanceof GenericCommandHelpTopic) {
+            Command cmd = ReflectionUtils.getFieldValue(topic, "command", Command.class);
+            registerCommand(cmd, cmd2Command);
         }
         else if (isInstance(topic, "help.CommandAliasHelpTopic")) {
-            int a = 1;
+            String aliasTarget = Util.cleanupCommand(ReflectionUtils.getFieldValue(topic, "aliasFor", String.class));
+            String name = Util.cleanupCommand(topic.getName());
+            aliases.computeIfAbsent(aliasTarget, k -> new HashSet<>()).add(name);
+            aliases.get(aliasTarget).add(aliasTarget);
         }
-        else if (isInstance(topic, "help.CustomHelpTopic")) {
-            int a = 1;
-        }
-        else if (isInstance(topic, "help.CustomIndexHelpTopic")) {
-            int a = 1;
-        }
-        else if (isInstance(topic, "help.MultipleCommandAliasHelpTopic")) {
-            int a = 1;
-        }
+        //else if (isInstance(topic, "help.CustomHelpTopic"))
+        //else if (isInstance(topic, "help.CustomIndexHelpTopic"))
+        //else if (isInstance(topic, "help.MultipleCommandAliasHelpTopic"))
         else {
-            var tmp = isInstance(topic, "help.CommandAliasHelpTopic");
-            var theClass = topic.getClass();
+            throw new IllegalArgumentException("Unknown topic type: " + topic.getClass().getName());
         }
     }
 
-    public static void clear() {
+    public static void load() {
         if (isLoaded) {
             return;
         }
         isLoaded = true;
 
         HelpMap helpMap = Bukkit.getHelpMap();
+        Map<String, Set<String>> aliases = new HashMap<>();
+        Map<String, Command> cmd2Command = new HashMap<>();
+
         for (HelpTopic topic : helpMap.getHelpTopics()) {
-            registerTopic(topic);
-            /*
-            if (topic instanceof IndexHelpTopic indexTopic) {
-                var allTopics = getAllTopicsVariable(indexTopic);
+            registerTopic(topic, aliases, cmd2Command);
+        }
+
+        addAliases(aliases, cmd2Command);
+        convertMapToCache(cmd2Command);
+
+        update(); // First time update
+    }
+
+    private static void addElement(final String pluginName, final String cmd) {
+        cacheCommand2Plugin.putIfAbsent(cmd, pluginName);
+        cachePlugin2Commands.computeIfAbsent(pluginName, p -> new HashSet<>()).add(cmd);
+    }
+
+    private static void processQueue(final @NotNull List<String> queue, final List<String> leftOvers) {
+        while (!queue.isEmpty()) {
+            String cmd = queue.remove(0);
+            if (cacheCommand2Plugin.containsKey(cmd)) {
+                continue; // Already processed
             }
-            else if (topic instanceof GenericCommandHelpTopic genericTopic) {
-                Command cmd = getCommand(genericTopic);
 
-                String command = genericTopic.getName();
-                if (command.charAt(0) == '/') {
-                    command = command.substring(1);
-                }
-                command = command.toLowerCase(Locale.ENGLISH);
+            int idx = cmd.indexOf(':');
+            if (idx != -1) {
+                String pluginName = cmd.substring(0, idx);
+                cmd = cmd.substring(idx + 1);
+                addElement(pluginName, cmd);
+                continue; // Good!
+            }
 
-                if (cmd instanceof PluginCommand pluginCommand) {
+            leftOvers.add(cmd); // Put at the end
+        }
+    }
 
-                }
-                else if (cmd instanceof VanillaCommandWrapper pluginCmd) {
+    private static void convertMapToCache(@NotNull Map<String, Command> cmd2Command) {
+        final List<String> queue = new ArrayList<>(cmd2Command.keySet());
+        final List<String> leftOvers = new ArrayList<>();
 
+        for (int i = 0; i < 3 && !queue.isEmpty(); i++) {
+            processQueue(queue, leftOvers);
+            queue.addAll(leftOvers);
+            leftOvers.clear();
+        }
+
+        while (!queue.isEmpty()) {
+            String cmd = queue.remove(0);
+            Command cmd2 = cmd2Command.get(cmd);
+            String pkg = cmd2.getClass().getPackage().getName();
+
+            if (cmd2 instanceof PluginCommand) {
+                PluginCommand p = (PluginCommand) cmd2;
+                addElement(p.getPlugin().getName().toLowerCase(Locale.ENGLISH), cmd);
+                continue;
+            }
+
+            boolean found = false;
+            for (var p2p : defaultPackageNames.entrySet()) {
+                String packageNameTest = p2p.getKey();
+                if (pkg.startsWith(packageNameTest + ".") || pkg.equals(packageNameTest)) {
+                    addElement(p2p.getValue(), cmd);
+                    found = true;
+                    break;
                 }
             }
-            String command = topic.getName();
 
-             */
+            if (!found) {
+                PluginHider.logger.warning("Unknown command: " + cmd + " -> " + pkg);
+            }
+        }
+    }
+
+    private static void addAliases(@NotNull Map<String, Set<String>> aliases, Map<String, Command> cmd2Command) {
+        for (Set<String> aliasSet : aliases.values()) {
+            String forThis = cmd2Command.keySet().stream().filter(aliasSet::contains).findFirst().orElse(null);
+            if (forThis == null) {
+                PluginHider.logger.warning("Cannot link these aliases back to its command: " + aliasSet);
+                continue;
+            }
+
+            for (String alias : aliasSet) {
+                cmd2Command.putIfAbsent(Util.cleanupCommand(alias), cmd2Command.get(forThis));
+            }
+        }
+
+        aliases.clear();
+    }
+
+    private static boolean shouldShowPlugin__Update(@NotNull final String cleaned) {
+        if (PluginHider.settings.showPlugins.contains(cleaned)) {
+            return true; // explicitly shown -- remember that `servers` are automagically added in Settings::load!
+        }
+        if (PluginHider.settings.hidePlugins.contains(cleaned)) {
+            return false; // explicitly hidden
+        }
+        if (Constants.servers.contains(cleaned)) {
+            return true;
+        }
+
+        return !PluginHider.settings.hideAll; // if all plugins are hidden;
+    }
+
+    private static <K, V> void repopulate(@NotNull Map<K, V> target, Map<K, V> source) {
+        synchronized (target) { // Fine here, as it's only used in "update"
+            target.clear();
+            target.putAll(source);
         }
     }
 
     public static void update() {
+        Map<String, Boolean> newShouldShowPlugin = new HashMap<>();
+        Map<String, Boolean> newShouldShowCmd = new HashMap<>();
+
+        final boolean colonsAllowed = PluginHider.settings.shouldAllowColonTabcompletion;
+        for (var entry : cachePlugin2Commands.entrySet()) {
+            var plugin = entry.getKey();
+            var show = shouldShowPlugin__Update(plugin);
+
+            newShouldShowPlugin.putIfAbsent(plugin, show);
+            for (var cmd : cachePlugin2Commands.get(plugin)) {
+                newShouldShowCmd.putIfAbsent(cmd, show);
+                newShouldShowCmd.putIfAbsent(plugin + ":" + cmd, show && colonsAllowed);
+            }
+        }
+
+        repopulate(shouldShowPlugin, newShouldShowPlugin);
+        repopulate(shouldShowCmd, newShouldShowCmd);
+    }
+
+    public static void dump() {
+        PluginHider.logger.info("----------------------------------------");
+        PluginHider.logger.info("Dumping plugin hider `showCachePlugins`:");
+        PluginHider.logger.info("*** size: " + shouldShowPlugin.size());
+        for (var entry : Caches.shouldShowPlugin.entrySet()) {
+            PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
+        }
+        PluginHider.logger.info("----------------------------------------");
+        PluginHider.logger.info("Dumping plugin hider `showCache`:");
+        PluginHider.logger.info("*** size: " + Caches.shouldShowCmd.size());
+        for (var entry : Caches.shouldShowCmd.entrySet()) {
+            PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
+        }
+        PluginHider.logger.info("----------------------------------------");
     }
 }

@@ -7,13 +7,13 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientTa
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTabComplete;
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.LRUCache;
+import org.avarion.pluginhider.util.Util;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -21,7 +21,6 @@ import java.util.function.Function;
 
 public class CommonVersionHelpClass {
     private final LRUCache<UUID, String> usersSeen = new LRUCache<>(1_000);
-    private final LRUCache<String, String> cache = new LRUCache<>(1_000);
 
     private final Function<@NotNull String, Boolean> isCorrectCommand;
     private final Function<@NotNull String, Boolean> shouldShow;
@@ -37,33 +36,27 @@ public class CommonVersionHelpClass {
         this.handleCommand = handleCommand;
     }
 
-    @NotNull String cleanup(@NotNull final String text) {
-        return cache.computeIfAbsent(
-                text, t -> {
-                    return t.trim().toLowerCase(Locale.ENGLISH);
-                }
-        );
-    }
-
     public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
-        String[] args = event.getMessage().split("\\s+");
-
-        if (args[0] != null && isCorrectCommand.apply(cleanup(args[0]))) {
+        String cmd = Util.cleanupWord(event.getMessage()); // We want to preserver the '/'!!
+        if (isCorrectCommand.apply(cmd)) {
             handleCommand.accept(event);
         }
     }
 
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        if (!(event.getPlayer() instanceof Player player)
-            || PluginHider.config.isOpLike(player)
-            || event.getPacketType() != PacketType.Play.Client.TAB_COMPLETE) {
+        if (!(event.getPlayer() instanceof Player)) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        if (PluginHider.settings.isOpLike(player) || event.getPacketType() != PacketType.Play.Client.TAB_COMPLETE) {
             return;
         }
 
         WrapperPlayClientTabComplete packet = new WrapperPlayClientTabComplete(event);
 
-        final String txt = packet.getText();
-        if (txt != null && isCorrectCommand.apply(cleanup(txt))) {
+        final String txt = Util.cleanupCommand(packet.getText());
+        if (isCorrectCommand.apply(txt)) {
             usersSeen.put(player.getUniqueId(), txt);
         }
     }
@@ -73,12 +66,16 @@ public class CommonVersionHelpClass {
             return;
         }
 
-        if (!(event.getPlayer() instanceof Player player) || PluginHider.config.isOpLike(player)) {
+        if (!(event.getPlayer() instanceof Player)) {
             return;
         }
 
-        String prevCmd = usersSeen.remove(player.getUniqueId());
-        if (prevCmd == null) {
+        Player player = event.getPlayer();
+        if (PluginHider.settings.isOpLike(player)) {
+            return;
+        }
+
+        if (usersSeen.remove(player.getUniqueId()) == null) {
             return;
         }
 
@@ -87,8 +84,8 @@ public class CommonVersionHelpClass {
         List<WrapperPlayServerTabComplete.CommandMatch> newSuggestions = new ArrayList<>();
 
         for (WrapperPlayServerTabComplete.CommandMatch suggestion : suggestions) {
-            String sug = suggestion.getText();
-            if (sug != null && shouldShow.apply(cleanup(sug))) {
+            String sug = Util.cleanupCommand(suggestion.getText());
+            if (shouldShow.apply(sug)) {
                 newSuggestions.add(suggestion);
             }
         }

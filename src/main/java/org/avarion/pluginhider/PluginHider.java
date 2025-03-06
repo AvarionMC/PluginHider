@@ -13,11 +13,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
+
 
 public class PluginHider extends JavaPlugin {
     public static PluginHider inst = null;
     public static Logger logger = null;
-    public static Config config = null;
+    public static Settings settings = new Settings();
 
     public final Version currentVersion = new Version(getDescription().getVersion());
 
@@ -31,9 +33,9 @@ public class PluginHider extends JavaPlugin {
     public void onEnable() {
         inst = this;
 
+        reloadSettings();
         setupLogger();
         setupBStats();
-        setupConfig();
 
         addCommands();
         setupListeners();
@@ -45,16 +47,22 @@ public class PluginHider extends JavaPlugin {
     @Override
     public void onDisable() {
         disableProtocolLib();
-        disableConfig();
     }
 
     //region <Config>
-    private void setupConfig() {
-        config = new Config();
-    }
+    public void reloadSettings() {
+        try {
+            settings.load();
 
-    private void disableConfig() {
-        config = null;
+            Bukkit.getScheduler().runTaskLater(
+                    PluginHider.inst, task -> {
+                        Caches.update();
+                    }, 1
+            );
+        }
+        catch (IOException e) {
+            logger.error("Failed to load settings", e);
+        }
     }
     //endregion
 

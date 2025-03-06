@@ -53,14 +53,14 @@ public class PluginHiderCommand implements TabExecutor {
             return true;
         }
 
-        functions.get(args[0]).action().execute(commandSender);
+        functions.get(args[0]).action.execute(commandSender);
         return true;
     }
 
     private void reloadConfiguration(CommandSender player) {
         Bukkit.getScheduler().runTaskAsynchronously(
                 PluginHider.inst, () -> {
-                    PluginHider.config.reload();
+                    PluginHider.inst.reloadSettings();
                     player.sendMessage("Reloaded the configuration.");
                     PluginHider.logger.info("Reloaded the configuration.");
                 }
@@ -89,7 +89,7 @@ public class PluginHiderCommand implements TabExecutor {
             txt.setColor(ChatColor.GREEN);
             txt.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, doThis));
 
-            TextComponent extra = new TextComponent(": " + entry.getValue().description());
+            TextComponent extra = new TextComponent(": " + entry.getValue().description);
             extra.setColor(ChatColor.WHITE);
             txt.addExtra(extra);
 
@@ -98,19 +98,7 @@ public class PluginHiderCommand implements TabExecutor {
     }
 
     public void dump(CommandSender commandSender) {
-        PluginHider.logger.info("----------------------------------------");
-        PluginHider.logger.info("Dumping plugin hider `showCachePlugins`:");
-        PluginHider.logger.info("*** size: " + Caches.showCachePlugins.size());
-        for (var entry : Caches.showCachePlugins.entrySet()) {
-            PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
-        }
-        PluginHider.logger.info("----------------------------------------");
-        PluginHider.logger.info("Dumping plugin hider `showCache`:");
-        PluginHider.logger.info("*** size: " + Caches.showCache.size());
-        for (var entry : Caches.showCache.entrySet()) {
-            PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
-        }
-        PluginHider.logger.info("----------------------------------------");
+        Caches.dump();
     }
 
     @Override
@@ -144,6 +132,13 @@ public class PluginHiderCommand implements TabExecutor {
         return tmp;
     }
 
-    record Action(String description, CommandAction action) {
+    static class Action {
+        final String description;
+        final CommandAction action;
+
+        public Action(String description, CommandAction action) {
+            this.description = description;
+            this.action = action;
+        }
     }
 }

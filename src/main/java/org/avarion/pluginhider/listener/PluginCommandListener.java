@@ -25,11 +25,12 @@ public class PluginCommandListener extends PacketListenerAbstract {
 
     @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) {
+        if (!(event.getPlayer() instanceof Player)) {
             return;
         }
 
-        if (PluginHider.config.isOpLike(player)) {
+        Player player = event.getPlayer();
+        if (PluginHider.settings.isOpLike(player)) {
             return;
         }
 
@@ -55,11 +56,12 @@ public class PluginCommandListener extends PacketListenerAbstract {
             return;
         }
 
-        if (!(event.getPlayer() instanceof Player player)) {
+        if (!(event.getPlayer() instanceof Player)) {
             return;
         }
 
-        if (PluginHider.config.isOpLike(player)) {
+        Player player = event.getPlayer();
+        if (PluginHider.settings.isOpLike(player)) {
             return;
         }
 
@@ -70,14 +72,14 @@ public class PluginCommandListener extends PacketListenerAbstract {
         }
 
         Component text = new WrapperPlayServerSystemChatMessage(event).getMessage();
-        if (!(text instanceof TextComponent tc)) {
+        if (!(text instanceof TextComponent)) {
             PluginHider.logger.error("Invalid system chat message type received (" + text.getClass().getName() + ")");
             usersSeen.remove(uuid);
             event.setCancelled(true);
             return;
         }
 
-        entry.addSystemChatLine(tc);
+        entry.addSystemChatLine((TextComponent) text);
 
         if (entry.amountOfPlugins == 0) {
             // No plugins...

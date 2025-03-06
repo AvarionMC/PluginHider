@@ -11,7 +11,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class DeclareCommandsListener extends PacketListenerAbstract {
@@ -23,15 +26,17 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             return;
         }
 
-        if (!(event.getPlayer() instanceof Player player)) {
-            PluginHider.logger.warning("not a player found!");
+        if (!(event.getPlayer() instanceof Player)) {
+            PluginHider.logger.warning("DECLARE_COMMANDS to a non-player??");
             event.setCancelled(true);
             return;
         }
 
-        if (PluginHider.config.isOpLike(player)) {
+        if (PluginHider.settings.isOpLike(event.getPlayer())) {
             return;
         }
+
+        Caches.load();
 
         Internal internal = new Internal(event);
         filter(internal, internal.rootNode, false);
@@ -88,7 +93,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             }
 
             final String name = child.getName().orElse("");
-            if (alwaysAdd || Caches.shouldShow(name)) {
+            if (alwaysAdd || Caches.shouldShowCommand(name)) {
                 if (data.indexTranslations.containsKey(idx)) {
                     // Already in the list!
                     newChildren.add(data.indexTranslations.get(idx));
@@ -122,20 +127,6 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             nodes = packet.getNodes();
             rootNode = nodes.get(packet.getRootIndex());
             newList.add(rootNode);
-
-            loadPluginCommands();
-        }
-
-        private void loadPluginCommands() {
-            for (Integer idx : rootNode.getChildren()) {
-                if (idx == null) {
-                    continue;
-                }
-
-                final String name = nodes.get(idx).getName().orElse("");
-                var res = Caches.splitPluginName(name); // This handles the storing if it's not registered yet
-                PluginHider.logger.info("res: " + Arrays.toString(res));
-            }
         }
     }
 }

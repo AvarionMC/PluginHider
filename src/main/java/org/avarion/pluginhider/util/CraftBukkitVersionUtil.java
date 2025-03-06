@@ -1,38 +1,33 @@
 package org.avarion.pluginhider.util;
 
 import org.bukkit.Bukkit;
-import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+
+/**
+ * Utility for handling CraftBukkit versioned classes
+ */
 
 
 /**
  * Utility for handling CraftBukkit versioned classes
  */
 public class CraftBukkitVersionUtil {
-    private static final String SERVER_VERSION;
+    private static final String CRAFTBUKKIT_PATH;
     private static final Map<String, Class<?>> classCache = new HashMap<>();
 
     static {
-        // Extract server version from package name
-        String packageName = Bukkit.getServer().getClass().getPackage().getName();
-        SERVER_VERSION = packageName.substring(packageName.lastIndexOf('.') + 1);
-    }
-
-    /**
-     * Gets the server version string (e.g., "v1_21_R1")
-     */
-    public static String getServerVersion() {
-        return SERVER_VERSION;
+        // org.bukkit.craftbukkit.v1_16_R1 on v1.16.1
+        // org.bukkit.craftbukkit on v1.21.1
+        CRAFTBUKKIT_PATH = Bukkit.getServer().getClass().getPackage().getName();
     }
 
     /**
      * Gets the properly versioned CraftBukkit class
      */
     public static Class<?> getCraftBukkitClass(String unversionedPath) {
-        String fullPath = "org.bukkit.craftbukkit." + SERVER_VERSION + "." + unversionedPath;
+        String fullPath = CRAFTBUKKIT_PATH + "." + unversionedPath;
 
         return classCache.computeIfAbsent(
                 fullPath, path -> {
@@ -56,7 +51,7 @@ public class CraftBukkitVersionUtil {
     /**
      * Checks if an object is an instance of a versioned CraftBukkit class
      *
-     * @param obj             Object to check
+     * @param obj Object to check
      * @param unversionedPath Unversioned class path (e.g., "help.CommandAliasHelpTopic")
      * @return true if obj is an instance of the specified class
      */
@@ -67,19 +62,5 @@ public class CraftBukkitVersionUtil {
 
         Class<?> clazz = getCraftBukkitClass(unversionedPath);
         return clazz != null && clazz.isInstance(obj);
-    }
-
-    /**
-     * Gets an instance of a field from an object, handling version-specific classes
-     */
-    public static <T> T getFieldValue(@NotNull Object obj, String fieldName, @NotNull Class<T> fieldType) {
-        try {
-            Field field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return fieldType.cast(field.get(obj));
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Failed to access " + fieldName + " in " + obj.getClass().getName(), e);
-        }
     }
 }

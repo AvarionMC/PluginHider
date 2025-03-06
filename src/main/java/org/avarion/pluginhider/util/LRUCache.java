@@ -14,7 +14,7 @@ public class LRUCache<K, V> implements Map<K, V> {
         this.cache = new LinkedHashMap<>(maxSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, TimestampedValue<V>> eldest) {
-                return size() > maxSize || isExpired(eldest.getValue());
+                return size() > maxSize && isExpired(eldest.getValue());
             }
         };
     }
@@ -27,20 +27,20 @@ public class LRUCache<K, V> implements Map<K, V> {
                 cache.remove(key);
                 return null;
             }
-            return value.value();
+            return value.value;
         }
         return null;
     }
 
     public V put(K key, V value) {
         TimestampedValue<V> oldValue = cache.put(key, new TimestampedValue<>(value));
-        return (oldValue != null) ? oldValue.value() : null;
+        return (oldValue != null) ? oldValue.value : null;
     }
 
     public V remove(Object key) {
         TimestampedValue<V> value = cache.remove(key);
         if (value != null && !isExpired(value)) {
-            return value.value();
+            return value.value;
         }
         return null;
     }
@@ -65,7 +65,7 @@ public class LRUCache<K, V> implements Map<K, V> {
         List<V> values = new ArrayList<>();
         for (TimestampedValue<V> value : cache.values()) {
             if (!isExpired(value)) {
-                values.add(value.value());
+                values.add(value.value);
             }
         }
         return values;
@@ -90,7 +90,7 @@ public class LRUCache<K, V> implements Map<K, V> {
 
         public K setKey(K key) {
             K oldKey = this.key;
-            key = this.key;
+            this.key = key;
             return oldKey;
         }
 
@@ -106,7 +106,7 @@ public class LRUCache<K, V> implements Map<K, V> {
         HashSet<Map.Entry<K, V>> entries = new HashSet<>();
         for (Map.Entry<K, TimestampedValue<V>> entry : cache.entrySet()) {
             if (!isExpired(entry.getValue())) {
-                entries.add(new Entry(entry.getKey(), entry.getValue().value()));
+                entries.add(new Entry(entry.getKey(), entry.getValue().value));
             }
         }
         return entries;
@@ -131,12 +131,16 @@ public class LRUCache<K, V> implements Map<K, V> {
     }
 
     private boolean isExpired(@NotNull TimestampedValue<V> value) {
-        return System.nanoTime() - value.timestamp() > expirationTimeNanos;
+        return System.nanoTime() - value.timestamp > expirationTimeNanos;
     }
 
-    private record TimestampedValue<V>(V value, long timestamp) {
+    private static class TimestampedValue<V> {
+        final V value;
+        long timestamp;
+
         public TimestampedValue(V value) {
-            this(value, System.nanoTime());
+            this.value = value;
+            this.timestamp = System.nanoTime();
         }
     }
 }
