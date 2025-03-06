@@ -10,8 +10,6 @@ import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.defaults.HelpCommand;
@@ -21,67 +19,17 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.avarion.pluginhider.util.CraftBukkitVersionUtil.isInstance;
 
 
-public class CustomHelpCommand extends HelpCommand {
-
-    private @Nullable CommandMap getCommandMap() {
-        try {
-            final Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
-            return (CommandMap) commandMapField.get(Bukkit.getServer());
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private void unregisterCommand(CommandMap commandMap, @NotNull Command cmd) {
-        @SuppressWarnings("unchecked") Map<String, Command>
-                knownCommands
-                = (Map<String, Command>) ReflectionUtils.getFieldValue(commandMap, "knownCommands", Map.class);
-
-        // Remove command and its aliases
-        knownCommands.remove("help");
-        knownCommands.remove("bukkit:help");
-        knownCommands.remove("minecraft:help");
-
-        // Also try to remove by aliases if any
-        for (String alias : cmd.getAliases()) {
-            knownCommands.remove(alias);
-            knownCommands.remove("bukkit:" + alias);
-            knownCommands.remove("minecraft:" + alias);
-        }
-    }
-
-    public void replaceHelpCommand() {
-        CommandMap commandMap = getCommandMap();
-        if (commandMap == null) {
-            PluginHider.logger.error("Could not access CommandMap - cannot register custom help command");
-            return;
-        }
-
-        // Remove the existing "help" command
-        Command existingCommand = commandMap.getCommand("help");
-        if (existingCommand != null) {
-            unregisterCommand(commandMap, existingCommand);
-        }
-
-        // Register your custom help command
-        commandMap.register("", this);
-        commandMap.register("bukkit", this);
-        commandMap.register("minecraft", this);
-
-        PluginHider.logger.info("Custom help command has been registered!");
-    }
+public class CustomHelpCommand extends HelpCommand implements MyCustomCommand {
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String currentAlias, @NotNull String[] args) {
+        Caches.load();
+
         if (this.testPermission(sender)) {
             String command;
             int pageNumber;
@@ -126,10 +74,10 @@ public class CustomHelpCommand extends HelpCommand {
             }
 
             if (topic == null) {
-                topic = this.findPossibleMatches(command);
+                topic = this.findPossibleMatches(sender, command);
             }
 
-            topic = filterTopic(topic);
+            topic = filterTopic(sender, topic);
 
             if (topic != null && topic.canSee(sender)) {
                 ChatPaginator.ChatPage page = ChatPaginator.paginate(
@@ -167,17 +115,17 @@ public class CustomHelpCommand extends HelpCommand {
         return true;
     }
 
-    @Contract("null -> false")
-    protected boolean isAllowed(@Nullable HelpTopic topic) {
+    @Contract("_, null -> false")
+    protected boolean isAllowed(@NotNull CommandSender sender, @Nullable HelpTopic topic) {
         if (topic == null) {
             return false;
         }
 
         if (topic instanceof IndexHelpTopic) {
-            return topic.getName().equalsIgnoreCase("Aliases") || Caches.shouldShowPlugin(topic.getName());
+            return topic.getName().equalsIgnoreCase("Aliases") || isAllowedPlugin(sender, topic.getName());
         }
         else if (topic instanceof GenericCommandHelpTopic || isInstance(topic, "help.CommandAliasHelpTopic")) {
-            return Caches.shouldShowCommand(topic.getName());
+            return isAllowedCommand(sender, topic.getName());
         }
         else {
             PluginHider.logger.error("Unknown topic type: " + topic.getClass().getName());
@@ -185,8 +133,8 @@ public class CustomHelpCommand extends HelpCommand {
         }
     }
 
-    @Contract("null -> null")
-    private @Nullable HelpTopic filterTopic(@Nullable HelpTopic topic) {
+    @Contract("_, null -> null")
+    private @Nullable HelpTopic filterTopic(@NotNull CommandSender sender, @Nullable HelpTopic topic) {
         if (topic == null) {
             return null;
         }
@@ -200,7 +148,7 @@ public class CustomHelpCommand extends HelpCommand {
             );
 
             for (HelpTopic oldTopic : oldAllTopics) {
-                if (isAllowed(oldTopic)) {
+                if (isAllowed(sender, oldTopic)) {
                     newAllTopics.add(oldTopic);
                 }
             }
@@ -217,7 +165,7 @@ public class CustomHelpCommand extends HelpCommand {
                     ReflectionUtils.getFieldValue(topic, "preamble", String.class)
             );
         }
-        else if (!isAllowed(topic)) {
+        else if (!isAllowed(sender, topic)) {
             return null;
         }
         else {
@@ -227,6 +175,8 @@ public class CustomHelpCommand extends HelpCommand {
 
     @NotNull
     public List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) {
+        Caches.load();
+
         Validate.notNull(sender, "Sender cannot be null");
         Validate.notNull(args, "Arguments cannot be null");
         Validate.notNull(alias, "Alias cannot be null");
@@ -235,7 +185,7 @@ public class CustomHelpCommand extends HelpCommand {
             String searchString = args[0];
 
             for (HelpTopic topic : Bukkit.getServer().getHelpMap().getHelpTopics()) {
-                if (!isAllowed(topic)) {
+                if (!isAllowed(sender, topic)) {
                     continue;
                 }
 
@@ -253,7 +203,7 @@ public class CustomHelpCommand extends HelpCommand {
     }
 
     @Nullable
-    protected HelpTopic findPossibleMatches(@NotNull String searchString) {
+    protected HelpTopic findPossibleMatches(@NotNull CommandSender sender, @NotNull String searchString) {
         int maxDistance = searchString.length() / 5 + 3;
         Set<HelpTopic> possibleMatches = new TreeSet<>(HelpTopicComparator.helpTopicComparatorInstance());
         if (searchString.startsWith("/")) {
@@ -261,7 +211,7 @@ public class CustomHelpCommand extends HelpCommand {
         }
 
         for (HelpTopic topic : Bukkit.getServer().getHelpMap().getHelpTopics()) {
-            if (!isAllowed(topic)) {
+            if (!isAllowed(sender, topic)) {
                 continue;
             }
 

@@ -27,7 +27,6 @@ public class Caches {
     private final static Map<String, Set<String>> cachePlugin2Commands = new HashMap<>();
 
     private static boolean isLoaded = false;
-    private static final LRUCache<String, CommandType> commandsCache = new LRUCache<>(1_000);
 
     private static final Map<String, String> defaultPackageNames = Map.of(
             "io.papermc",
@@ -40,63 +39,14 @@ public class Caches {
             "spigot"
     );
 
-    public static CommandType getCommandType(@Nullable final String cmd) {
-        return commandsCache.computeIfAbsent(
-                cmd, k -> {
-                    if (k == null) {
-                        return CommandType.OTHER;
-                    }
-
-                    var firstSpace = k.indexOf(' ');
-                    if (firstSpace != -1) {
-                        k = k.substring(0, firstSpace);
-                    }
-
-                    k = k.toLowerCase(Locale.ENGLISH);
-                    if (Constants.possiblePluginCommands.contains(k)) {
-                        return CommandType.PLUGINS;
-                    }
-                    if (Constants.possibleVersionCommands.contains(k)) {
-                        return CommandType.VERSION;
-                    }
-                    if (Constants.possibleHelpCommands.contains(k)) {
-                        return CommandType.HELP;
-                    }
-                    return CommandType.OTHER;
-                }
-        );
-    }
-
-    public static boolean isPluginCmd(final @Nullable String txt) {
-        return getCommandType(txt) == CommandType.PLUGINS;
-    }
-
-    public static boolean isVersionCmd(final @Nullable String txt) {
-        return getCommandType(txt) == CommandType.VERSION;
-    }
-
-    public static boolean isHelpCmd(final @Nullable String txt) {
-        return getCommandType(txt) == CommandType.HELP;
-    }
-
     @Contract(pure = true)
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
         return shouldShowPlugin.getOrDefault(Util.cleanupCommand(pluginName), false);
     }
 
     @Contract(pure = true)
-    public static boolean isInPluginCache(@Nullable final String pluginName) {
-        return shouldShowPlugin.containsKey(Util.cleanupCommand(pluginName));
-    }
-
-    @Contract(pure = true)
     public static boolean shouldShowCommand(@Nullable final String command) {
         return shouldShowCmd.getOrDefault(Util.cleanupCommand(command), false);
-    }
-
-    @Contract(pure = true)
-    public static boolean isInCommandCache(@Nullable final String command) {
-        return shouldShowCmd.containsKey(Util.cleanupCommand(command));
     }
 
     private static void registerCommand(Command command, @NotNull Map<String, Command> cmd2Command) {

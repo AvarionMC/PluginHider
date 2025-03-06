@@ -136,7 +136,7 @@ public class LRUCache<K, V> implements Map<K, V> {
 
     private static class TimestampedValue<V> {
         final V value;
-        long timestamp;
+        final long timestamp;
 
         public TimestampedValue(V value) {
             this.value = value;

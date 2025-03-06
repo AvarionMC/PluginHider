@@ -42,13 +42,6 @@ public class CraftBukkitVersionUtil {
     }
 
     /**
-     * Checks if a versioned CraftBukkit class exists
-     */
-    public static boolean craftBukkitClassExists(String unversionedPath) {
-        return getCraftBukkitClass(unversionedPath) != null;
-    }
-
-    /**
      * Checks if an object is an instance of a versioned CraftBukkit class
      *
      * @param obj Object to check

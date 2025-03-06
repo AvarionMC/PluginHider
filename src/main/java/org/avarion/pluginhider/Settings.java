@@ -157,10 +157,10 @@ public class Settings extends YamlFileInterface {
         return entries.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
     }
 
-    public <T extends YamlFileInterface> T load() throws IOException {
+    public <T extends YamlFileInterface> void load() throws IOException {
         File config = new File(PluginHider.inst.getDataFolder(), "config.yml");
 
-        T loaded = super.load(config);
+        super.load(config);
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
@@ -170,8 +170,6 @@ public class Settings extends YamlFileInterface {
         hideAll = hidePlugins.contains("*");
 
         super.save(config);
-
-        return loaded;
     }
 
     public boolean isOpLike(@Nullable Player player) {
