@@ -2,6 +2,7 @@ package org.avarion.pluginhider.util;
 
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.Settings;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,12 @@ public class Config {
             PluginHider.logger.error("Failed to load config.yml: " + e.getMessage());
         }
 
-        Caches.showCache.clear();
+        Bukkit.getScheduler().runTaskLater(
+                PluginHider.inst, task -> {
+                    Caches.clear();
+                    Caches.update();
+                }, 1
+        );
 
         hideAll = settings.hidePlugins.contains("*");
     }
