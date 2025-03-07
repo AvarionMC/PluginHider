@@ -8,6 +8,7 @@ import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
 import org.bukkit.help.IndexHelpTopic;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public class Caches {
     private final static Map<String, Set<String>> cachePlugin2Commands = new HashMap<>();
 
     private static boolean isLoaded = false;
+    private final static int TIMEOUT_FOR_CHECKING_PLUGINS = 1000 * 60 * 5;
 
     private static final Map<String, String> defaultPackageNames = Map.of(
             "io.papermc",
@@ -253,12 +255,12 @@ public class Caches {
         PluginHider.logger.info("----------------------------------------");
     }
 
-    private static void updatePlugins() {
+    public static void updatePlugins() {
         // For the first 5 minutes on your server (yeah, there are slow servers!), update the plugins
         //   to ensure we got the ones not mentioned in the helpmap (ie: the ones without commands)
-        final long stopAt = System.currentTimeMillis() + 300_000;
+        final long stopAt = System.currentTimeMillis() + TIMEOUT_FOR_CHECKING_PLUGINS;
 
-        new BukkitRunable() {
+        new BukkitRunnable() {
             @Override
             public void run() {
                 if (System.currentTimeMillis() > stopAt) {
@@ -268,7 +270,7 @@ public class Caches {
                 List<String> newPlugins = new ArrayList<>();
                 for (var plugin : Bukkit.getPluginManager().getPlugins()) {
                     String name = Util.cleanupCommand(plugin.getName());
-                    if (!shouldShowPlugin.contains(name)) {
+                    if (!shouldShowPlugin.containsKey(name)) {
                         newPlugins.add(name);
                     }
                 }
@@ -276,11 +278,11 @@ public class Caches {
                 if (!newPlugins.isEmpty()) {
                     synchronized (shouldShowPlugin) {
                         for (var pluginName : newPlugins) {
-                            shouldShowPlugin.computeIfAbsent(pluginName, Caches::shouldShowPlugin__Update)
+                            shouldShowPlugin.computeIfAbsent(pluginName, Caches::shouldShowPlugin__Update);
                         }
                     }
                 }
             }
-        }.runTask(PluginHider.plugin, 1, 10L);
+        }.runTaskTimer(PluginHider.inst, 10, 10);
     }
 }
