@@ -1,6 +1,10 @@
 package org.avarion.pluginhider;
 
-import org.avarion.pluginhider.commands.*;
+import org.avarion.pluginhider.commands.PluginHiderCommand;
+import org.avarion.pluginhider.custom_commands.CustomCommandInjector;
+import org.avarion.pluginhider.custom_commands.CustomHelpCommand;
+import org.avarion.pluginhider.custom_commands.CustomPluginsCommand;
+import org.avarion.pluginhider.custom_commands.CustomVersionCommand;
 import org.avarion.pluginhider.util.*;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;

@@ -35,8 +35,7 @@ public class Caches {
             "bukkit",
             "co.aikar",
             "bukkit",
-            "org.spigotmc",
-            "spigot"
+            "org.spigotmc", "spigot", "org.avarion.pluginhider.custom_commands", "bukkit"
     );
 
     @Contract(pure = true)

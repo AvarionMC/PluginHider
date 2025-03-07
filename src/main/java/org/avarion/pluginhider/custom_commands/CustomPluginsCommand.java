@@ -1,4 +1,4 @@
-package org.avarion.pluginhider.commands;
+package org.avarion.pluginhider.custom_commands;
 
 import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.Constants;
@@ -176,20 +176,45 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
         return true;
     }
 
-    /**
-     * Format providers for text output
-     */
     private @NotNull List<String> formatPluginsAsText(TreeMap<String, Object> plugins) {
         try {
             List<String> pluginNames = new ArrayList<>();
 
+            // Get needed classes once
+            Class<?> spigotProviderClass = ReflectionUtils.getClass(
+                    "io.papermc.paper.plugin.provider.type.spigot.SpigotPluginProvider");
+            Class<?> craftMagicNumbersClass = ReflectionUtils.getClass("org.bukkit.craftbukkit.util.CraftMagicNumbers");
+
             for (Map.Entry<String, Object> entry : plugins.entrySet()) {
                 String pluginName = entry.getKey();
                 Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+                Object provider = entry.getValue();
+
+                boolean isLegacy = false;
+                if (spigotProviderClass != null && craftMagicNumbersClass != null && spigotProviderClass.isInstance(
+                        provider)) {
+                    try {
+                        Object meta = ReflectionUtils.invoke(provider, "getMeta");
+                        isLegacy = ReflectionUtils.invokeStatic(
+                                craftMagicNumbersClass,
+                                "isLegacy",
+                                Boolean.class,
+                                meta
+                        );
+                    }
+                    catch (Exception e) {
+                        // If we can't determine legacy status, assume it's not legacy
+                    }
+                }
 
                 String formattedName = (plugin != null && plugin.isEnabled())
                                        ? ChatColor.GREEN + pluginName
                                        : ChatColor.RED + pluginName;
+
+                // Add star for legacy plugins
+                if (isLegacy) {
+                    formattedName = ChatColor.YELLOW + "*" + formattedName;
+                }
 
                 pluginNames.add(formattedName);
             }

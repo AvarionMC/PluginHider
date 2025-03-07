@@ -1,4 +1,4 @@
-package org.avarion.pluginhider.commands;
+package org.avarion.pluginhider.custom_commands;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang.Validate;

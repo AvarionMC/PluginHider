@@ -1,4 +1,4 @@
-package org.avarion.pluginhider.commands;
+package org.avarion.pluginhider.custom_commands;
 
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Caches;

@@ -128,4 +128,47 @@ public class ReflectionUtils {
         }
         return returnType.cast(result);
     }
+
+    /**
+     * Gets a static method from a class
+     */
+    public static @NotNull Method getStaticMethod(@NotNull Class<?> clazz, String methodName, Class<?>... paramTypes) {
+        try {
+            Method method = clazz.getDeclaredMethod(methodName, paramTypes);
+            method.setAccessible(true);
+            return method;
+        }
+        catch (NoSuchMethodException e) {
+            throw new RuntimeException("Method " + methodName + " not found in " + clazz.getName(), e);
+        }
+    }
+
+    /**
+     * Invokes a static method via reflection
+     */
+    public static Object invokeStatic(@NotNull Class<?> clazz, String methodName, Object @NotNull ... args) {
+        Class<?>[] paramTypes = new Class<?>[args.length];
+        for (int i = 0; i < args.length; i++) {
+            paramTypes[i] = args[i] != null ? args[i].getClass() : null;
+        }
+
+        try {
+            Method method = getStaticMethod(clazz, methodName, paramTypes);
+            return method.invoke(null, args);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to invoke static method " + methodName + " on " + clazz.getName(), e);
+        }
+    }
+
+    /**
+     * Invokes a static method and casts the result to the specified type
+     */
+    public static <T> T invokeStatic(@NotNull Class<?> clazz, String methodName, Class<T> returnType, Object... args) {
+        Object result = invokeStatic(clazz, methodName, args);
+        if (result == null && returnType.isPrimitive()) {
+            throw new RuntimeException("Cannot cast null to primitive type " + returnType.getName());
+        }
+        return returnType.cast(result);
+    }
 }
