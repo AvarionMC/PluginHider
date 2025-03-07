@@ -4,14 +4,34 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Utility class for reflection operations
  */
 public class ReflectionUtils {
+    private static final Map<String, Class<?>> classCache = new HashMap<>();
+
     /**
      * Gets value of a private field via reflection
      */
+    public static <T> T getStaticFieldValue(
+            @NotNull Class<?> currentClass,
+            String fieldName,
+            @NotNull Class<T> fieldType
+    ) {
+        try {
+            Field field = currentClass.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return fieldType.cast(field.get(null));
+        }
+        catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to access " + fieldName + " in " + currentClass.getName(), e);
+        }
+    }
+
     public static <T> T getFieldValue(@NotNull Object obj, String fieldName, @NotNull Class<T> fieldType) {
         Class<?> currentClass = obj.getClass();
 
@@ -55,10 +75,7 @@ public class ReflectionUtils {
             }
             catch (SecurityException e) {
                 throw new RuntimeException(
-                        "Security exception accessing "
-                        + methodName
-                        + " in "
-                        + currentClass.getName(), e
+                        "Security exception accessing " + methodName + " in " + currentClass.getName(), e
                 );
             }
         }
@@ -68,5 +85,47 @@ public class ReflectionUtils {
                                    + " not found in "
                                    + obj.getClass().getName()
                                    + " or any superclass");
+    }
+
+    public static Class<?> getClass(String fullPath) {
+        return classCache.computeIfAbsent(
+                fullPath, path -> {
+                    try {
+                        return Class.forName(path);
+                    }
+                    catch (ClassNotFoundException e) {
+                        return null;
+                    }
+                }
+        );
+    }
+
+    /**
+     * Invokes a method found via reflection
+     */
+    public static Object invoke(@NotNull Object obj, String methodName, Object @NotNull ... args) {
+        Class<?>[] paramTypes = new Class<?>[args.length];
+        for (int i = 0; i < args.length; i++) {
+            paramTypes[i] = args[i] != null ? args[i].getClass() : null;
+        }
+
+        try {
+            Method method = getMethod(obj, methodName, paramTypes);
+            return method.invoke(obj, args);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to invoke method " + methodName + " on " + obj.getClass().getName(), e);
+        }
+    }
+
+    /**
+     * Invokes a method and casts the result to the specified type
+     */
+    public static <T> T invoke(@NotNull Object obj, String methodName, Class<T> returnType, Object... args) {
+        Object result = invoke(obj, methodName, args);
+        if (result == null && returnType.isPrimitive()) {
+            throw new RuntimeException("Cannot cast null to primitive type " + returnType.getName());
+        }
+        return returnType.cast(result);
     }
 }

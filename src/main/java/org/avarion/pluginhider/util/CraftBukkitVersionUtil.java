@@ -2,9 +2,6 @@ package org.avarion.pluginhider.util;
 
 import org.bukkit.Bukkit;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Utility for handling CraftBukkit versioned classes
  */
@@ -15,7 +12,6 @@ import java.util.Map;
  */
 public class CraftBukkitVersionUtil {
     private static final String CRAFTBUKKIT_PATH;
-    private static final Map<String, Class<?>> classCache = new HashMap<>();
 
     static {
         // org.bukkit.craftbukkit.v1_16_R1 on v1.16.1
@@ -27,18 +23,7 @@ public class CraftBukkitVersionUtil {
      * Gets the properly versioned CraftBukkit class
      */
     public static Class<?> getCraftBukkitClass(String unversionedPath) {
-        String fullPath = CRAFTBUKKIT_PATH + "." + unversionedPath;
-
-        return classCache.computeIfAbsent(
-                fullPath, path -> {
-                    try {
-                        return Class.forName(path);
-                    }
-                    catch (ClassNotFoundException e) {
-                        return null;
-                    }
-                }
-        );
+        return ReflectionUtils.getClass(CRAFTBUKKIT_PATH + "." + unversionedPath);
     }
 
     /**

@@ -2,6 +2,7 @@ package org.avarion.pluginhider.commands;
 
 import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.Constants;
+import org.avarion.pluginhider.util.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -9,8 +10,6 @@ import org.bukkit.command.defaults.PluginsCommand;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,60 +36,61 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
         Caches.load();
 
         if (Constants.isPaperServer()) {
-            return executePaperPlugins(sender, currentAlias, args);
+            try {
+                return executePaperPlugins(sender, currentAlias, args);
+            }
+            catch (Exception e) {
+                int a = 1;
+            }
         }
-        else {
-            return executeSpigotPlugins(sender, currentAlias, args);
-        }
+
+        return executeSpigotPlugins(sender, currentAlias, args);
     }
 
     /**
-     * Paper server implementation using reflection but with only Bukkit API output
+     * Paper server implementation using reflection with ReflectionUtils
      */
-    private boolean executePaperPlugins(CommandSender sender, String currentAlias, String[] args) {
-        try {
-            // Get the necessary classes via reflection
-            Class<?> entrypointClass = Class.forName("io.papermc.paper.plugin.entrypoint.Entrypoint");
-            Class<?> launchEntryPointHandlerClass = Class.forName(
-                    "io.papermc.paper.plugin.entrypoint.LaunchEntryPointHandler");
-            Class<?> paperPluginProviderClass = Class.forName(
-                    "io.papermc.paper.plugin.provider.type.paper.PaperPluginParent$PaperServerPluginProvider");
-            Class<?> spigotPluginProviderClass = Class.forName(
-                    "io.papermc.paper.plugin.provider.type.spigot.SpigotPluginProvider");
+    private boolean executePaperPlugins(CommandSender sender, String currentAlias, String[] args) throws Exception {
+        // Get the necessary classes via reflection
+        Class<?> entrypointClass = ReflectionUtils.getClass("io.papermc.paper.plugin.entrypoint.Entrypoint");
+        Class<?> launchEntryPointHandlerClass = ReflectionUtils.getClass(
+                "io.papermc.paper.plugin.entrypoint.LaunchEntryPointHandler");
+        Class<?> paperPluginProviderClass = ReflectionUtils.getClass(
+                "io.papermc.paper.plugin.provider.type.paper.PaperPluginParent$PaperServerPluginProvider");
+        Class<?> spigotPluginProviderClass = ReflectionUtils.getClass(
+                "io.papermc.paper.plugin.provider.type.spigot.SpigotPluginProvider");
 
-            // Get the INSTANCE field
-            Field instanceField = launchEntryPointHandlerClass.getDeclaredField("INSTANCE");
-            instanceField.setAccessible(true);
-            Object handlerInstance = instanceField.get(null);
+        // Get static INSTANCE field
+        Object handlerInstance = ReflectionUtils.getStaticFieldValue(
+                launchEntryPointHandlerClass,
+                "INSTANCE",
+                Object.class
+        );
 
-            // Get the PLUGIN field
-            Field pluginField = entrypointClass.getDeclaredField("PLUGIN");
-            pluginField.setAccessible(true);
-            Object pluginEntrypoint = pluginField.get(null);
+        // Get static PLUGIN field
+        Object pluginEntrypoint = ReflectionUtils.getStaticFieldValue(entrypointClass, "PLUGIN", Object.class);
 
-            // Call get() method
-            Method getMethod = launchEntryPointHandlerClass.getDeclaredMethod("get", entrypointClass);
-            Object result = getMethod.invoke(handlerInstance, pluginEntrypoint);
+        // Call get() method
+        Object result = ReflectionUtils.invoke(handlerInstance, "get", pluginEntrypoint);
 
-            // Get registered providers
-            Method getRegisteredProvidersMethod = result.getClass().getDeclaredMethod("getRegisteredProviders");
-            List<?> providers = (List<?>) getRegisteredProvidersMethod.invoke(result);
+        // Call getRegisteredProviders via reflection, using our utility that checks superclasses
+        Collection<?> providers = (Collection<?>) ReflectionUtils.invoke(result, "getRegisteredProviders");
 
-            // Sort providers into maps
-            TreeMap<String, Object> paperPlugins = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-            TreeMap<String, Object> spigotPlugins = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        if (providers == null || providers.isEmpty()) {
+            return executeSpigotPlugins(sender, currentAlias, args);
+        }
 
-            for (Object provider : providers) {
+        // Sort providers into maps
+        TreeMap<String, Object> paperPlugins = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        TreeMap<String, Object> spigotPlugins = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+        for (Object provider : providers) {
+            try {
                 // Get plugin meta
-                Method getMetaMethod = provider.getClass().getDeclaredMethod("getMeta");
-                Object meta = getMetaMethod.invoke(provider);
+                Object meta = ReflectionUtils.invoke(provider, "getMeta");
 
-                // Get plugin name
-                Method getNameMethod = meta.getClass().getDeclaredMethod("getName");
-                String name = (String) getNameMethod.invoke(meta);
-
-                Method getDisplayNameMethod = meta.getClass().getDeclaredMethod("getDisplayName");
-                String displayName = (String) getDisplayNameMethod.invoke(meta);
+                // Get name and display name
+                String name = ReflectionUtils.invoke(meta, "getName", String.class);
 
                 // Check if plugin is allowed to be shown
                 if (!isAllowedPlugin(sender, name)) {
@@ -99,60 +99,60 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
 
                 // Categorize by provider type
                 if (paperPluginProviderClass.isInstance(provider)) {
-                    paperPlugins.put(displayName, provider);
+                    paperPlugins.put(name, provider);
                 }
                 else if (spigotPluginProviderClass.isInstance(provider)) {
-                    spigotPlugins.put(displayName, provider);
+                    spigotPlugins.put(name, provider);
                 }
             }
-
-            // Generate and send output using Bukkit/Spigot API
-            int sizePaperPlugins = paperPlugins.size();
-            int sizeSpigotPlugins = spigotPlugins.size();
-            int sizePlugins = sizePaperPlugins + sizeSpigotPlugins;
-            boolean hasAllPluginTypes = (sizePaperPlugins > 0 && sizeSpigotPlugins > 0);
-
-            // Send header message
-            String infoMessage = ChatColor.WHITE + "Server Plugins (" + sizePlugins + "):";
-            sender.sendMessage(infoMessage);
-
-            // Paper plugins section
-            if (!paperPlugins.isEmpty()) {
-                String paperHeader = ChatColor.BLUE + "Paper Plugins" + (
-                        hasAllPluginTypes ? " (" + sizePaperPlugins + ")" : ""
-                ) + ":";
-
-                sender.sendMessage(paperHeader);
-
-                // Format and send paper plugins
-                List<String> formattedPaperPlugins = formatPluginsAsText(paperPlugins);
-                for (String line : formattedPaperPlugins) {
-                    sender.sendMessage(line);
-                }
+            catch (Exception e) {
+                // Skip this provider if we can't get its information
+                int a = 1;
             }
-
-            // Spigot plugins section
-            if (!spigotPlugins.isEmpty()) {
-                String spigotHeader = ChatColor.GOLD + "Bukkit Plugins" + (
-                        hasAllPluginTypes ? " (" + sizeSpigotPlugins + ")" : ""
-                ) + ":";
-
-                sender.sendMessage(spigotHeader);
-
-                // Format and send spigot plugins
-                List<String> formattedSpigotPlugins = formatPluginsAsText(spigotPlugins);
-                for (String line : formattedSpigotPlugins) {
-                    sender.sendMessage(line);
-                }
-            }
-
-            return true;
-        }
-        catch (Exception e) {
-            int a = 1;
         }
 
-        return executeSpigotPlugins(sender, currentAlias, args);
+        // Generate and send output using Bukkit/Spigot API
+        int sizePaperPlugins = paperPlugins.size();
+        int sizeSpigotPlugins = spigotPlugins.size();
+        int sizePlugins = sizePaperPlugins + sizeSpigotPlugins;
+        boolean hasAllPluginTypes = (sizePaperPlugins > 0 && sizeSpigotPlugins > 0);
+
+        // Send header message
+        // ChatColor.AQUA + "ℹ " +  <-- not yet available in Paper 1.21.1
+        String infoMessage = ChatColor.WHITE + "Server Plugins (" + sizePlugins + "):";
+        sender.sendMessage(infoMessage);
+
+        // Paper plugins section
+        if (!paperPlugins.isEmpty()) {
+            String paperHeader = ChatColor.BLUE + "Paper Plugins" + (
+                    hasAllPluginTypes ? " (" + sizePaperPlugins + ")" : ""
+            ) + ":";
+
+            sender.sendMessage(paperHeader);
+
+            // Format and send paper plugins
+            List<String> formattedPaperPlugins = formatPluginsAsText(paperPlugins);
+            for (String line : formattedPaperPlugins) {
+                sender.sendMessage(line);
+            }
+        }
+
+        // Spigot plugins section
+        if (!spigotPlugins.isEmpty()) {
+            String spigotHeader = ChatColor.GOLD + "Bukkit Plugins" + (
+                    hasAllPluginTypes ? " (" + sizeSpigotPlugins + ")" : ""
+            ) + ":";
+
+            sender.sendMessage(spigotHeader);
+
+            // Format and send spigot plugins
+            List<String> formattedSpigotPlugins = formatPluginsAsText(spigotPlugins);
+            for (String line : formattedSpigotPlugins) {
+                sender.sendMessage(line);
+            }
+        }
+
+        return true;
     }
 
     /**
