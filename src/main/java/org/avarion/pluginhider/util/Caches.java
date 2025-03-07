@@ -35,7 +35,10 @@ public class Caches {
             "bukkit",
             "co.aikar",
             "bukkit",
-            "org.spigotmc", "spigot", "org.avarion.pluginhider.custom_commands", "bukkit"
+            "org.spigotmc",
+            "spigot",
+            "org.avarion.pluginhider.custom_commands",
+            "bukkit"
     );
 
     @Contract(pure = true)
@@ -248,5 +251,36 @@ public class Caches {
             PluginHider.logger.info("key: " + entry.getKey() + ", value: " + entry.getValue());
         }
         PluginHider.logger.info("----------------------------------------");
+    }
+
+    private static void updatePlugins() {
+        // For the first 5 minutes on your server (yeah, there are slow servers!), update the plugins
+        //   to ensure we got the ones not mentioned in the helpmap (ie: the ones without commands)
+        final long stopAt = System.currentTimeMillis() + 300_000;
+
+        new BukkitRunable() {
+            @Override
+            public void run() {
+                if (System.currentTimeMillis() > stopAt) {
+                    cancel();
+                }
+
+                List<String> newPlugins = new ArrayList<>();
+                for (var plugin : Bukkit.getPluginManager().getPlugins()) {
+                    String name = Util.cleanupCommand(plugin.getName());
+                    if (!shouldShowPlugin.contains(name)) {
+                        newPlugins.add(name);
+                    }
+                }
+
+                if (!newPlugins.isEmpty()) {
+                    synchronized (shouldShowPlugin) {
+                        for (var pluginName : newPlugins) {
+                            shouldShowPlugin.computeIfAbsent(pluginName, Caches::shouldShowPlugin__Update)
+                        }
+                    }
+                }
+            }
+        }.runTask(PluginHider.plugin, 1, 10L);
     }
 }
