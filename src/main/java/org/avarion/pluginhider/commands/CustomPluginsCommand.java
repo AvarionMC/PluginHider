@@ -1,10 +1,5 @@
 package org.avarion.pluginhider.commands;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.Constants;
 import org.bukkit.Bukkit;
@@ -21,10 +16,6 @@ import java.util.stream.Collectors;
 
 
 public class CustomPluginsCommand extends PluginsCommand implements MyCustomCommand {
-    private static final Component INFO_ICON_SERVER_PLUGIN = Component.text("ℹ ", TextColor.color(52, 159, 218));
-    private static final Component PLUGIN_TICK = Component.text("- ", NamedTextColor.DARK_GRAY);
-    private static final Component PLUGIN_TICK_EMPTY = Component.text(" ");
-
     public CustomPluginsCommand() {
         super("plugins");
     }
@@ -43,6 +34,8 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
      * Executes the plugins command with filtering based on permissions
      */
     public boolean execute(@NotNull CommandSender sender, @NotNull String currentAlias, @NotNull String[] args) {
+        Caches.load();
+
         if (Constants.isPaperServer()) {
             return executePaperPlugins(sender, currentAlias, args);
         }
@@ -52,7 +45,7 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
     }
 
     /**
-     * Paper server implementation using reflection
+     * Paper server implementation using reflection but with only Bukkit API output
      */
     private boolean executePaperPlugins(CommandSender sender, String currentAlias, String[] args) {
         try {
@@ -113,44 +106,53 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
                 }
             }
 
-            // Generate and send output components
+            // Generate and send output using Bukkit/Spigot API
             int sizePaperPlugins = paperPlugins.size();
             int sizeSpigotPlugins = spigotPlugins.size();
             int sizePlugins = sizePaperPlugins + sizeSpigotPlugins;
             boolean hasAllPluginTypes = (sizePaperPlugins > 0 && sizeSpigotPlugins > 0);
 
-            Component infoMessage = Component.text()
-                                             .append(INFO_ICON_SERVER_PLUGIN)
-                                             .append(Component.text(
-                                                     String.format("Server Plugins (%s):", sizePlugins),
-                                                     NamedTextColor.WHITE
-                                             ))
-                                             .build();
-
+            // Send header message
+            String infoMessage = ChatColor.WHITE + "Server Plugins (" + sizePlugins + "):";
             sender.sendMessage(infoMessage);
 
+            // Paper plugins section
             if (!paperPlugins.isEmpty()) {
-                sender.sendMessage(header("Paper Plugins", 0x0288D1, sizePaperPlugins, hasAllPluginTypes));
+                String paperHeader = ChatColor.BLUE + "Paper Plugins" + (
+                        hasAllPluginTypes ? " (" + sizePaperPlugins + ")" : ""
+                ) + ":";
 
-                for (Component component : formatProviders(paperPlugins)) {
-                    sender.sendMessage(component);
+                sender.sendMessage(paperHeader);
+
+                // Format and send paper plugins
+                List<String> formattedPaperPlugins = formatPluginsAsText(paperPlugins);
+                for (String line : formattedPaperPlugins) {
+                    sender.sendMessage(line);
                 }
             }
 
+            // Spigot plugins section
             if (!spigotPlugins.isEmpty()) {
-                sender.sendMessage(header("Bukkit Plugins", 0xED8106, sizeSpigotPlugins, hasAllPluginTypes));
+                String spigotHeader = ChatColor.GOLD + "Bukkit Plugins" + (
+                        hasAllPluginTypes ? " (" + sizeSpigotPlugins + ")" : ""
+                ) + ":";
 
-                for (Component component : formatProviders(spigotPlugins)) {
-                    sender.sendMessage(component);
+                sender.sendMessage(spigotHeader);
+
+                // Format and send spigot plugins
+                List<String> formattedSpigotPlugins = formatPluginsAsText(spigotPlugins);
+                for (String line : formattedSpigotPlugins) {
+                    sender.sendMessage(line);
                 }
             }
 
             return true;
         }
         catch (Exception e) {
-            // Fallback to regular plugin list
-            return executeSpigotPlugins(sender, currentAlias, args);
+            int a = 1;
         }
+
+        return executeSpigotPlugins(sender, currentAlias, args);
     }
 
     /**
@@ -175,44 +177,51 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
     }
 
     /**
-     * Format providers similar to PaperPluginsCommand
+     * Format providers for text output
      */
-    private @NotNull List<Component> formatProviders(TreeMap<String, Object> plugins) {
+    private @NotNull List<String> formatPluginsAsText(TreeMap<String, Object> plugins) {
         try {
-            List<Component> components = new ArrayList<>(plugins.size());
+            List<String> pluginNames = new ArrayList<>();
 
             for (Map.Entry<String, Object> entry : plugins.entrySet()) {
                 String pluginName = entry.getKey();
                 Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
 
-                TextColor color = plugin != null && plugin.isEnabled() ? NamedTextColor.GREEN : NamedTextColor.RED;
+                String formattedName = (plugin != null && plugin.isEnabled())
+                                       ? ChatColor.GREEN + pluginName
+                                       : ChatColor.RED + pluginName;
 
-                components.add(Component.text(pluginName, color));
+                pluginNames.add(formattedName);
             }
 
-            // Split list into sublists for better presentation (like original)
-            boolean isFirst = true;
-            List<Component> formattedLists = new ArrayList<>();
+            pluginNames.sort(String.CASE_INSENSITIVE_ORDER);
 
-            for (List<Component> sublist : partitionList(components, 10)) {
-                Component component = Component.space();
+            // Split into groups of 10 plugins
+            List<String> result = new ArrayList<>();
+            List<List<String>> partitions = partitionList(pluginNames, 10);
+
+            boolean isFirst = true;
+            for (List<String> partition : partitions) {
+                StringBuilder line = new StringBuilder();
+
                 if (isFirst) {
-                    component = component.append(PLUGIN_TICK);
+                    line.append(ChatColor.DARK_GRAY).append("- ");
                     isFirst = false;
                 }
                 else {
-                    component = PLUGIN_TICK_EMPTY;
+                    line.append("  ");
                 }
 
-                formattedLists.add(component.append(Component.join(JoinConfiguration.commas(true), sublist)));
+                line.append(String.join(ChatColor.WHITE + ", ", partition));
+                result.add(line.toString());
             }
 
-            return formattedLists;
+            return result;
         }
         catch (Exception e) {
             // Simple fallback
-            List<Component> fallback = new ArrayList<>();
-            fallback.add(Component.text(String.join(", ", plugins.keySet())));
+            List<String> fallback = new ArrayList<>();
+            fallback.add(String.join(", ", plugins.keySet()));
             return fallback;
         }
     }
@@ -226,20 +235,5 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
             parts.add(new ArrayList<>(list.subList(i, Math.min(list.size(), i + size))));
         }
         return parts;
-    }
-
-    /**
-     * Create a header component
-     */
-    private @NotNull Component header(String header, int color, int count, boolean showSize) {
-        TextComponent.Builder componentHeader = Component.text()
-                                                         .color(TextColor.color(color))
-                                                         .append(Component.text(header));
-
-        if (showSize) {
-            componentHeader.appendSpace().append(Component.text("(" + count + ")"));
-        }
-
-        return componentHeader.append(Component.text(":")).build();
     }
 }
