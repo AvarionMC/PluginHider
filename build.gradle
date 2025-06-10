@@ -28,6 +28,7 @@ repositories {
 
     maven { url = uri('https://jitpack.io/') }
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+    maven { url = uri("https://repo.codemc.io/repository/avarionmc/") }
 }
 
 dependencies {
@@ -40,7 +41,7 @@ dependencies {
     // 1.12-1.15: has no HTML colors
     compileOnly "com.github.retrooper:packetevents-spigot:2.7.0"
 
-    implementation "com.github.AvarionMC:yaml:1.1.8"
+    implementation "org.avarion:yaml:1.2.0"
 }
 
 version = determineVersion()
