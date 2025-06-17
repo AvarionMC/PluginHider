@@ -38,7 +38,7 @@ dependencies {
     // 1.12-1.15: has no HTML colors
     compileOnly "com.github.retrooper:packetevents-spigot:2.8.0"
 
-    implementation "com.github.AvarionMC:yaml:1.1.8"
+    implementation "com.github.AvarionMC:yaml:1.2.0"
 }
 
 version = determineVersion()
