@@ -36,7 +36,7 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.16.1-R0.1-SNAPSHOT"
     // 1.10-1.11: no .spigot() on commandSender
     // 1.12-1.15: has no HTML colors
-    compileOnly "com.github.retrooper:packetevents-spigot:2.9.3"
+    compileOnly "com.github.retrooper:packetevents-spigot:2.9.4"
 
     implementation "com.github.AvarionMC:yaml:1.2.1"
 }
