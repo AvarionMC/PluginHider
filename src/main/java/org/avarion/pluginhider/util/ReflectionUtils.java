@@ -1,10 +1,12 @@
 package org.avarion.pluginhider.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -29,6 +31,19 @@ public class ReflectionUtils {
         }
         catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to access " + fieldName + " in " + currentClass.getName(), e);
+        }
+    }
+
+    public static @NotNull @Unmodifiable List<Field> getFields(@NotNull Class<?> clazz) {
+        try {
+            Field[] fields = clazz.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+            }
+            return List.of(fields);
+        }
+        catch (SecurityException e) {
+            throw new RuntimeException("Failed to access fields in " + clazz.getName(), e);
         }
     }
 

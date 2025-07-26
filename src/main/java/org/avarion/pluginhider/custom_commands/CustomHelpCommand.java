@@ -128,6 +128,7 @@ public class CustomHelpCommand extends HelpCommand implements MyCustomCommand {
             return isAllowedCommand(sender, topic.getName());
         }
         else {
+            var x = ReflectionUtils.getFields(topic.getClass());
             PluginHider.logger.error("Unknown topic type: " + topic.getClass().getName());
             return false;
         }

@@ -4,10 +4,12 @@ import org.avarion.pluginhider.PluginHider;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
 import org.bukkit.help.IndexHelpTopic;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +81,8 @@ public class Caches {
                     "allTopics",
                     Collection.class
             );
-            for (var topic2 : allTopics) {
-                registerTopic(topic2, aliases, cmd2Command);
+            for (var subTopic : allTopics) {
+                registerTopic(subTopic, aliases, cmd2Command);
             }
         }
         else if (topic instanceof GenericCommandHelpTopic) {
@@ -93,10 +95,15 @@ public class Caches {
             aliases.computeIfAbsent(aliasTarget, k -> new HashSet<>()).add(name);
             aliases.get(aliasTarget).add(aliasTarget);
         }
-        //else if (isInstance(topic, "help.CustomHelpTopic"))
+        else if (isInstance(topic, "help.CustomHelpTopic")) {
+            var name = Util.cleanupCommand(topic.getName());
+            cmd2Command.putIfAbsent(name, null);
+        }
         //else if (isInstance(topic, "help.CustomIndexHelpTopic"))
         //else if (isInstance(topic, "help.MultipleCommandAliasHelpTopic"))
         else {
+            var x = ReflectionUtils.getFields(topic.getClass());
+            var name = Util.cleanupCommand(topic.getName());
             PluginHider.logger.error("Unknown topic type: " + topic.getClass().getName());
         }
     }
@@ -122,8 +129,9 @@ public class Caches {
     }
 
     private static void addElement(final String pluginName, final String cmd) {
-        cacheCommand2Plugin.putIfAbsent(cmd, pluginName);
-        cachePlugin2Commands.computeIfAbsent(pluginName, p -> new HashSet<>()).add(cmd);
+        var loweredName = pluginName.toLowerCase(Locale.ENGLISH);
+        cacheCommand2Plugin.putIfAbsent(cmd, loweredName);
+        cachePlugin2Commands.computeIfAbsent(loweredName, p -> new HashSet<>()).add(cmd);
     }
 
     private static void processQueue(final @NotNull List<String> queue, final List<String> leftOvers) {
@@ -162,7 +170,7 @@ public class Caches {
 
             if (cmd2 instanceof PluginCommand) {
                 PluginCommand p = (PluginCommand) cmd2;
-                addElement(p.getPlugin().getName().toLowerCase(Locale.ENGLISH), cmd);
+                addElement(p.getPlugin().getName(), cmd);
                 continue;
             }
 
@@ -177,6 +185,12 @@ public class Caches {
             }
 
             if (!found) {
+                if (cmd2 instanceof BukkitCommand) {
+                    var pluginName = JavaPlugin.getProvidingPlugin(cmd2.getClass()).getName();
+                    addElement(pluginName, cmd);
+                    continue;
+                }
+
                 PluginHider.logger.warning("Unknown command: " + cmd + " -> " + pkg);
             }
         }

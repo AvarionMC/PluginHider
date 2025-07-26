@@ -24,12 +24,12 @@ public class CustomVersionCommand extends VersionCommand implements MyCustomComm
 
     public CustomVersionCommand() {
         super("version");
-        describeToSender = ReflectionUtils.getMethod(this, "describeToSender", Plugin.class, CommandSender.class);
+        this.describeToSender = ReflectionUtils.getMethod(this, "describeToSender", Plugin.class, CommandSender.class);
     }
 
     private void callToSender(Plugin plugin, CommandSender sender) {
         try {
-            describeToSender.invoke(plugin, sender);
+            this.describeToSender.invoke(this, plugin, sender);
         }
         catch (IllegalAccessException | InvocationTargetException e) {
             PluginHider.logger.error("Failed to call 'describeToSender'!");

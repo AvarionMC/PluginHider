@@ -37,3 +37,12 @@ build/
 
 .gradle/
 gradle/
+/eula.txt
+/gradlew
+/gradlew.bat
+/server.properties
+cache/
+libraries/
+logs/
+plugins/
+versions/
