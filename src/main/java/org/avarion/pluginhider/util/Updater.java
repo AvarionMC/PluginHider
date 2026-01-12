@@ -19,7 +19,7 @@ public class Updater {
             return;
         }
 
-        if (lastVersion.compareTo(PluginHider.inst.currentVersion) < 0) {
+        if (lastVersion.compareTo(PluginHider.inst.currentVersion) > 0) {
             PluginHider.logger.warning("New version available: "
                                        + lastVersion
                                        + ", you have: "

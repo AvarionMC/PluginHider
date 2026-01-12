@@ -5,7 +5,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.ReflectionUtils;
 import org.bukkit.Bukkit;
@@ -13,15 +12,16 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.defaults.HelpCommand;
-import org.bukkit.help.*;
+import org.bukkit.help.HelpMap;
+import org.bukkit.help.HelpTopic;
+import org.bukkit.help.HelpTopicComparator;
+import org.bukkit.help.IndexHelpTopic;
 import org.bukkit.util.ChatPaginator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static org.avarion.pluginhider.util.CraftBukkitVersionUtil.isInstance;
 
 
 public class CustomHelpCommand extends HelpCommand implements MyCustomCommand {
@@ -124,14 +124,8 @@ public class CustomHelpCommand extends HelpCommand implements MyCustomCommand {
         if (topic instanceof IndexHelpTopic) {
             return topic.getName().equalsIgnoreCase("Aliases") || isAllowedPlugin(sender, topic.getName());
         }
-        else if (topic instanceof GenericCommandHelpTopic || isInstance(topic, "help.CommandAliasHelpTopic")) {
-            return isAllowedCommand(sender, topic.getName());
-        }
-        else {
-            var x = ReflectionUtils.getFields(topic.getClass());
-            PluginHider.logger.error("Unknown topic type: " + topic.getClass().getName());
-            return false;
-        }
+
+        return isAllowedCommand(sender, topic.getName());
     }
 
     @Contract("_, null -> null")

@@ -40,8 +40,8 @@ public class PluginHiderCommand implements TabExecutor {
             String[] args
     ) {
         if (!commandSender.isOp()) {
-            commandSender.sendMessage("Unknown command. Type \"/help\" for help.");
-            return true;
+            //            commandSender.sendMessage("Unknown or incomplete command. See below for error\n" + ChatColor.UNDERLINE + command.getName()");
+            return false;
         }
 
         if (args.length == 0) {

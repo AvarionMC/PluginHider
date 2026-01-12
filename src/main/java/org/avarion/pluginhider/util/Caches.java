@@ -4,7 +4,6 @@ import org.avarion.pluginhider.PluginHider;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static org.avarion.pluginhider.util.CraftBukkitVersionUtil.isInstance;
+import static org.avarion.pluginhider.util.Util.cleanupCommand;
 
 
 public class Caches {
@@ -47,26 +47,31 @@ public class Caches {
 
     @Contract(pure = true)
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
-        return shouldShowPlugin.getOrDefault(Util.cleanupCommand(pluginName), false);
+        return shouldShowPlugin.getOrDefault(Util.cleanupWord(pluginName), false);
     }
 
     @Contract(pure = true)
     public static boolean shouldShowCommand(@Nullable final String command) {
-        return shouldShowCmd.getOrDefault(Util.cleanupCommand(command), false);
+        return shouldShowCmd.getOrDefault(command, false);
     }
 
     private static void registerCommand(Command command, @NotNull Map<String, Command> cmd2Command) {
-        cmd2Command.putIfAbsent(Util.cleanupCommand(command.getName()), command);
+        cmd2Command.putIfAbsent(command.getName(), command);
+        for (String alias : command.getAliases()) {
+            cmd2Command.putIfAbsent(alias, command);
+        }
 
-        for (String fieldName : Arrays.asList("aliases", "activeAliases")) {
+        try {
             @SuppressWarnings("unchecked") List<String> aliases = (List<String>) ReflectionUtils.getFieldValue(
-                    command,
-                    fieldName,
+                    command, "alias",
                     List.class
             );
             for (String alias : aliases) {
-                cmd2Command.putIfAbsent(Util.cleanupCommand(alias), command);
+                cmd2Command.putIfAbsent(alias, command);
             }
+        }
+        catch (RuntimeException ignored) {
+            // Sometimes this isn't in there
         }
     }
 
@@ -84,28 +89,41 @@ public class Caches {
             for (var subTopic : allTopics) {
                 registerTopic(subTopic, aliases, cmd2Command);
             }
+            return;
         }
-        else if (topic instanceof GenericCommandHelpTopic) {
+
+        if (topic instanceof GenericCommandHelpTopic) {
             Command cmd = ReflectionUtils.getFieldValue(topic, "command", Command.class);
             registerCommand(cmd, cmd2Command);
+            return;
         }
-        else if (isInstance(topic, "help.CommandAliasHelpTopic")) {
-            String aliasTarget = Util.cleanupCommand(ReflectionUtils.getFieldValue(topic, "aliasFor", String.class));
-            String name = Util.cleanupCommand(topic.getName());
+
+        if (isInstance(topic, "help.CommandAliasHelpTopic")) {
+            String aliasTarget = ReflectionUtils.getFieldValue(topic, "aliasFor", String.class);
+            String name = topic.getName();
             aliases.computeIfAbsent(aliasTarget, k -> new HashSet<>()).add(name);
             aliases.get(aliasTarget).add(aliasTarget);
+            return;
         }
-        else if (isInstance(topic, "help.CustomHelpTopic")) {
-            var name = Util.cleanupCommand(topic.getName());
-            cmd2Command.putIfAbsent(name, null);
+
+        if (isInstance(topic, "help.CustomHelpTopic")) {
+            cmd2Command.putIfAbsent(topic.getName(), null);
+            return;
         }
+
         //else if (isInstance(topic, "help.CustomIndexHelpTopic"))
         //else if (isInstance(topic, "help.MultipleCommandAliasHelpTopic"))
-        else {
-            var x = ReflectionUtils.getFields(topic.getClass());
-            var name = Util.cleanupCommand(topic.getName());
-            PluginHider.logger.error("Unknown topic type: " + topic.getClass().getName());
+        try {
+            Command cmd = ReflectionUtils.getFieldValue(topic, "cmd", Command.class);
+            registerCommand(cmd, cmd2Command);
+            return;
         }
+        catch (RuntimeException ignored) {
+        }
+
+        var x = ReflectionUtils.getFields(topic.getClass());
+        var name = topic.getName();
+        PluginHider.logger.error("Unknown topic type (2): " + topic.getClass().getName());
     }
 
     public static void load() {
@@ -185,10 +203,12 @@ public class Caches {
             }
 
             if (!found) {
-                if (cmd2 instanceof BukkitCommand) {
+                try {
                     var pluginName = JavaPlugin.getProvidingPlugin(cmd2.getClass()).getName();
                     addElement(pluginName, cmd);
                     continue;
+                }
+                catch (Exception ignored) {
                 }
 
                 PluginHider.logger.warning("Unknown command: " + cmd + " -> " + pkg);
@@ -198,14 +218,22 @@ public class Caches {
 
     private static void addAliases(@NotNull Map<String, Set<String>> aliases, Map<String, Command> cmd2Command) {
         for (Set<String> aliasSet : aliases.values()) {
-            String forThis = cmd2Command.keySet().stream().filter(aliasSet::contains).findFirst().orElse(null);
-            if (forThis == null) {
+            var forThis = cmd2Command.keySet().stream().filter(aliasSet::contains).findFirst();
+            if (forThis.isEmpty()) {
+                forThis = cmd2Command.keySet()
+                                     .stream()
+                                     .filter(k -> aliasSet.stream()
+                                                          .anyMatch(a -> a.startsWith("/") && a.substring(1).equals(k)))
+                                     .findFirst();
+            }
+
+            if (forThis.isEmpty()) {
                 PluginHider.logger.warning("Cannot link these aliases back to its command: " + aliasSet);
                 continue;
             }
 
             for (String alias : aliasSet) {
-                cmd2Command.putIfAbsent(Util.cleanupCommand(alias), cmd2Command.get(forThis));
+                cmd2Command.putIfAbsent(cleanupCommand(alias), cmd2Command.get(forThis.get()));
             }
         }
 
@@ -245,7 +273,9 @@ public class Caches {
             newShouldShowPlugin.putIfAbsent(plugin, show);
             for (var cmd : cachePlugin2Commands.get(plugin)) {
                 newShouldShowCmd.putIfAbsent(cmd, show);
+                newShouldShowCmd.putIfAbsent(cleanupCommand(cmd), show);
                 newShouldShowCmd.putIfAbsent(plugin + ":" + cmd, show && colonsAllowed);
+                newShouldShowCmd.putIfAbsent(plugin + ":" + cleanupCommand(cmd), show && colonsAllowed);
             }
         }
 
@@ -283,7 +313,7 @@ public class Caches {
 
                 List<String> newPlugins = new ArrayList<>();
                 for (var plugin : Bukkit.getPluginManager().getPlugins()) {
-                    String name = Util.cleanupCommand(plugin.getName());
+                    String name = Util.cleanupWord(plugin.getName());
                     if (!shouldShowPlugin.containsKey(name)) {
                         newPlugins.add(name);
                     }
