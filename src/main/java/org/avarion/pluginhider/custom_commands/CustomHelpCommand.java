@@ -1,10 +1,10 @@
 package org.avarion.pluginhider.custom_commands;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.Validate;
-import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.ReflectionUtils;

@@ -37,6 +37,8 @@ build/
 
 .gradle/
 gradle/
+gradlew
+gradlew.bat
 /eula.txt
 /gradlew
 /gradlew.bat
