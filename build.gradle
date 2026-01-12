@@ -5,7 +5,7 @@ def determineVersion() {
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'com.gradleup.shadow' version '8.3.8'
+    id 'com.gradleup.shadow' version '9.3.1'
 }
 
 repositories {
@@ -33,13 +33,12 @@ repositories {
 
 dependencies {
     implementation "org.bstats:bstats-bukkit:3.1.0"
-    implementation "org.jetbrains:annotations:26.0.2"
+    implementation "org.jetbrains:annotations:26.0.2-1"
 
-    compileOnly "org.spigotmc:spigot-api:1.16.1-R0.1-SNAPSHOT"
-
+    compileOnly "org.spigotmc:spigot-api:1.19-R0.1-20220725.090125-47"
     // 1.10-1.11: no .spigot() on commandSender
     // 1.12-1.15: has no HTML colors
-    compileOnly "com.github.retrooper:packetevents-spigot:2.9.4"
+    compileOnly "com.github.retrooper:packetevents-spigot:2.11.1"
 
     implementation "org.avarion:yaml:1.2.1"
 }
