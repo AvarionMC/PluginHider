@@ -1,6 +1,7 @@
 package org.avarion.pluginhider;
 
 import org.avarion.yaml.*;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,91 +13,90 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+
 @YamlFile(
-        lenient = Leniency.LENIENT, header = """
-        Plugin Visibility Configuration Guide
-        =====================================
-        
-        This guide explains how to control which plugins are visible to players.
-        
-        Basic Concepts:
-        - hide_plugins: List of plugins to hide
-        - show_plugins: List of plugins to explicitly show
-        - '*' in hide_plugins: Hides all plugins not listed in show_plugins
-        - show_plugins takes priority over hide_plugins
-        
-        Example Scenarios
-        ----------------
-        Let's say you have these plugins installed:
-        - pluginA
-        - pluginB
-        - pluginC
-        - pluginD
-        - pluginE
-        
-        1. Hide a Single Plugin
-           To hide only pluginB:
-           ```
-           hide_plugins:
-             - pluginB
-           ```
-           Result: All plugins except pluginB will be visible
-        
-        2. Show Only One Plugin
-           To show only pluginB:
-           ```
-           hide_plugins:
-             - '*'
-           show_plugins:
-             - pluginB
-           ```
-           Result: Only pluginB will be visible
-        
-        3. Hide Multiple Specific Plugins
-           To hide pluginB and pluginD:
-           ```
-           hide_plugins:
-             - pluginB
-             - pluginD
-           ```
-           Result: All plugins except pluginB and pluginD will be visible
-        
-        4. Show Only Selected Plugins
-           To show only pluginA and pluginC:
-           ```
-           hide_plugins:
-             - '*'
-           show_plugins:
-             - pluginA
-             - pluginC
-           ```
-           Result: Only pluginA and pluginC will be visible
-        
-        5. Hide All Plugins
-           To hide all plugins except Minecraft/Bukkit commands:
-           ```
-           hide_plugins:
-             - '*'
-           ```
-           Result: Only default Minecraft/Bukkit commands will be visible
-        
-        6. Hide Everything Including Minecraft/Bukkit
-           To hide absolutely everything:
-           ```
-           hide_plugins:
-             - '*'
-             - minecraft
-             - bukkit
-           ```
-           Result: No commands will be visible at all
-        
-        Important Notes:
-        - Using '*' in hide_plugins will hide all plugin commands BUT KEEP default Minecraft/Bukkit commands visible
-        - To hide Minecraft commands, you must explicitly add 'minecraft' to hide_plugins
-        - To hide Bukkit commands, you must explicitly add 'bukkit' to hide_plugins
-        - If a plugin appears in both hide_plugins and show_plugins, it WILL be shown
-        - For complete plugin visibility, consider uninstalling PluginHider instead
-        """
+        lenient = Leniency.LENIENT, header = "Plugin Visibility Configuration Guide\n"
+                                             + "=====================================\n"
+                                             + "\n"
+                                             + "This guide explains how to control which plugins are visible to players.\n"
+                                             + "\n"
+                                             + "Basic Concepts:\n"
+                                             + "- hide_plugins: List of plugins to hide\n"
+                                             + "- show_plugins: List of plugins to explicitly show\n"
+                                             + "- '*' in hide_plugins: Hides all plugins not listed in show_plugins\n"
+                                             + "- show_plugins takes priority over hide_plugins\n"
+                                             + "\n"
+                                             + "Example Scenarios\n"
+                                             + "----------------\n"
+                                             + "Let's say you have these plugins installed:\n"
+                                             + "- pluginA\n"
+                                             + "- pluginB\n"
+                                             + "- pluginC\n"
+                                             + "- pluginD\n"
+                                             + "- pluginE\n"
+                                             + "\n"
+                                             + "1. Hide a Single Plugin\n"
+                                             + "   To hide only pluginB:\n"
+                                             + "   ```\n"
+                                             + "   hide_plugins:\n"
+                                             + "     - pluginB\n"
+                                             + "   ```\n"
+                                             + "   Result: All plugins except pluginB will be visible\n"
+                                             + "\n"
+                                             + "2. Show Only One Plugin\n"
+                                             + "   To show only pluginB:\n"
+                                             + "   ```\n"
+                                             + "   hide_plugins:\n"
+                                             + "     - '*'\n"
+                                             + "   show_plugins:\n"
+                                             + "     - pluginB\n"
+                                             + "   ```\n"
+                                             + "   Result: Only pluginB will be visible\n"
+                                             + "\n"
+                                             + "3. Hide Multiple Specific Plugins\n"
+                                             + "   To hide pluginB and pluginD:\n"
+                                             + "   ```\n"
+                                             + "   hide_plugins:\n"
+                                             + "     - pluginB\n"
+                                             + "     - pluginD\n"
+                                             + "   ```\n"
+                                             + "   Result: All plugins except pluginB and pluginD will be visible\n"
+                                             + "\n"
+                                             + "4. Show Only Selected Plugins\n"
+                                             + "   To show only pluginA and pluginC:\n"
+                                             + "   ```\n"
+                                             + "   hide_plugins:\n"
+                                             + "     - '*'\n"
+                                             + "   show_plugins:\n"
+                                             + "     - pluginA\n"
+                                             + "     - pluginC\n"
+                                             + "   ```\n"
+                                             + "   Result: Only pluginA and pluginC will be visible\n"
+                                             + "\n"
+                                             + "5. Hide All Plugins\n"
+                                             + "   To hide all plugins except Minecraft/Bukkit commands:\n"
+                                             + "   ```\n"
+                                             + "   hide_plugins:\n"
+                                             + "     - '*'\n"
+                                             + "   ```\n"
+                                             + "   Result: Only default Minecraft/Bukkit commands will be visible\n"
+                                             + "\n"
+                                             + "6. Hide Everything Including Minecraft/Bukkit\n"
+                                             + "   To hide absolutely everything:\n"
+                                             + "   ```\n"
+                                             + "   hide_plugins:\n"
+                                             + "     - '*'\n"
+                                             + "     - minecraft\n"
+                                             + "     - bukkit\n"
+                                             + "   ```\n"
+                                             + "   Result: No commands will be visible at all\n"
+                                             + "\n"
+                                             + "Important Notes:\n"
+                                             + "- Using '*' in hide_plugins will hide all plugin commands BUT KEEP default Minecraft/Bukkit commands visible\n"
+                                             + "- To hide Minecraft commands, you must explicitly add 'minecraft' to hide_plugins\n"
+                                             + "- To hide Bukkit commands, you must explicitly add 'bukkit' to hide_plugins\n"
+                                             + "- If a plugin appears in both hide_plugins and show_plugins, it WILL be shown\n"
+                                             + "- For complete plugin visibility, consider uninstalling PluginHider instead"
 )
 public class Settings extends YamlFileInterface {
     @YamlComment("List of plugins to hide from players. Use '*' to hide all plugins.")
@@ -108,48 +108,45 @@ public class Settings extends YamlFileInterface {
     public Set<String> showPlugins = Set.of("*");
 
     @YamlComment(
-            """
-                    Controls whether plugin commands can be tab-completed with the plugin name prefix.
-                    Example: When true, commands can be completed as "pluginname:command"
-                    When false, only the command name without the plugin prefix will be shown.
-                    """
+            "Controls whether plugin commands can be tab-completed with the plugin name prefix.\n"
+            + "Example: When true, commands can be completed as 'pluginname:command'\n"
+            + "When false, only the command name without the plugin prefix will be shown."
     )
     @YamlKey("should_allow_colon_tabcompletion")
     public boolean shouldAllowColonTabcompletion = false;
 
     @YamlComment(
-            """
-                    When true, server operators (ops) can see all plugin commands regardless of hide/show settings.
-                    Set to false if you want hiding rules to apply to operators as well.
-                    """
+            "When true, server operators (ops) can see all plugin commands regardless of hide/show settings.\n"
+            + "Set to false if you want hiding rules to apply to operators as well."
     )
     @YamlKey("operator_can_see_everything")
     public boolean operatorCanSeeEverything = false;
 
     @YamlComment(
-            """
-                    List of operator UUIDs that should see all commands, even when he is not an operator or operator_can_see_everything is false.
-                    Format: List of player UUIDs
-                    """
+            "List of operator UUIDs that should see all commands, even when he is not an operator or operator_can_see_everything is false.\n"
+            + "Format: List of player UUIDs"
     )
     @YamlKey("whitelisted_uuids")
     public Set<UUID> whitelist = Set.of();
 
     @YamlComment(
-            """
-                    List of operator UUIDs that should always be treated as normal users, even when he's an operator and operator_can_see_everything is true.
-                    Format: List of player UUIDs
-                    """
+            "List of operator UUIDs that should always be treated as normal users, even when he's an operator and operator_can_see_everything is true.\n"
+            + "Format: List of player UUIDs"
     )
     @YamlKey("blacklisted_uuids")
     public Set<UUID> blacklist = Set.of();
+
+    public boolean hideAll = true;
 
     private @NotNull Set<String> makeLowerCase(@Nullable Set<String> entries) {
         if (entries == null) {
             return Set.of();
         }
 
-        return entries.stream().filter(Objects::nonNull).map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet());
+        return entries.stream()
+                      .filter(Objects::nonNull)
+                      .map(p -> p.toLowerCase(Locale.ENGLISH))
+                      .collect(Collectors.toUnmodifiableSet());
     }
 
     private <T> @NotNull Set<T> cleanUp(@Nullable Set<T> entries) {
@@ -160,17 +157,34 @@ public class Settings extends YamlFileInterface {
         return entries.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
     }
 
-    @Override
-    public <T extends YamlFileInterface> T load(@NotNull File file) throws IOException {
-        T loaded = super.load(file);
+    public <T extends YamlFileInterface> void load() throws IOException {
+        File config = new File(PluginHider.inst.getDataFolder(), "config.yml");
+
+        super.load(config);
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
         whitelist = cleanUp(whitelist);
         blacklist = cleanUp(blacklist);
 
-        super.save(file);
+        hideAll = hidePlugins.contains("*");
 
-        return loaded;
+        super.save(config);
+    }
+
+    public boolean isOpLike(@Nullable Player player) {
+        if (player == null) {
+            return false;
+        }
+
+        UUID id = player.getUniqueId();
+        if (whitelist.contains(id)) {
+            return true;
+        }
+        if (blacklist.contains(id)) {
+            return false;
+        }
+
+        return operatorCanSeeEverything && player.isOp();
     }
 }

@@ -3,20 +3,25 @@ package org.avarion.pluginhider;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import org.avarion.pluginhider.commands.PluginHiderCommand;
+import org.avarion.pluginhider.custom_commands.CustomCommandInjector;
+import org.avarion.pluginhider.custom_commands.CustomHelpCommand;
+import org.avarion.pluginhider.custom_commands.CustomPluginsCommand;
+import org.avarion.pluginhider.custom_commands.CustomVersionCommand;
 import org.avarion.pluginhider.listener.DeclareCommandsListener;
-import org.avarion.pluginhider.listener.PluginCommandListener;
-import org.avarion.pluginhider.listener.VersionCommandListener;
 import org.avarion.pluginhider.util.*;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
+
 
 public class PluginHider extends JavaPlugin {
     public static PluginHider inst = null;
     public static Logger logger = null;
-    public static Config config = null;
+    public static final Settings settings = new Settings();
 
     public final Version currentVersion = new Version(getDescription().getVersion());
 
@@ -30,31 +35,38 @@ public class PluginHider extends JavaPlugin {
     public void onEnable() {
         inst = this;
 
+        reloadSettings();
         setupLogger();
         setupBStats();
-        setupConfig();
 
-        addListeners();
         addCommands();
-        setupPacketEvents();
+        setupListeners();
 
         logger.info("Loaded version: " + currentVersion);
         startUpdateCheck();
+
+        Caches.updatePlugins();
     }
 
     @Override
     public void onDisable() {
         disableProtocolLib();
-        disableConfig();
     }
 
     //region <Config>
-    private void setupConfig() {
-        config = new Config();
-    }
+    public void reloadSettings() {
+        try {
+            settings.load();
 
-    private void disableConfig() {
-        config = null;
+            Bukkit.getScheduler().runTaskLater(
+                    PluginHider.inst, task -> {
+                        Caches.update();
+                    }, 1
+            );
+        }
+        catch (IOException e) {
+            logger.error("Failed to load settings", e);
+        }
     }
     //endregion
 
@@ -70,12 +82,24 @@ public class PluginHider extends JavaPlugin {
     }
     //endregion
 
-    //region <PacketEvents>
-    private void setupPacketEvents() {
-        PacketEvents.getAPI().getSettings().debug(false).reEncodeByDefault(true).checkForUpdates(false).timeStampMode(TimeStampMode.MILLIS);
-        //        PacketEvents.getAPI().init();
+    //region <Listeners>
+    private void setupListeners() {
+        CustomCommandInjector.replaceCommand(new CustomHelpCommand());
+        CustomCommandInjector.replaceCommand(new CustomPluginsCommand());
+        CustomCommandInjector.replaceCommand(new CustomVersionCommand());
 
-        PacketEvents.getAPI().getEventManager().registerListeners(new DeclareCommandsListener(), new PluginCommandListener(), new VersionCommandListener());
+        PacketEvents.getAPI()
+                    .getSettings()
+                    .debug(false)
+                    .reEncodeByDefault(true)
+                    .checkForUpdates(false)
+                    .timeStampMode(TimeStampMode.MILLIS);
+
+        PacketEvents.getAPI()
+                    .getEventManager()
+                    .registerListeners(new DeclareCommandsListener());
+
+        Bukkit.getScheduler().runTaskLater(this, PacketEvents.getAPI()::init, 1);
     }
 
     private void disableProtocolLib() {
@@ -88,13 +112,9 @@ public class PluginHider extends JavaPlugin {
 
     //region <check for update>
     private void startUpdateCheck() {
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> Updater.run());
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, Updater::run, 10, 3600 * 20L);
     }
     //endregion
-
-    private void addListeners() {
-        Bukkit.getPluginManager().registerEvents(new VersionCommandListener(), this);
-    }
 
     private void addCommands() {
         PluginCommand cmd = getCommand("pluginhider");

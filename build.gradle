@@ -28,23 +28,26 @@ repositories {
 
     maven { url = uri('https://jitpack.io/') }
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+    maven { url = uri("https://repo.codemc.io/repository/avarionmc/") }
 }
 
 dependencies {
     implementation "org.bstats:bstats-bukkit:3.1.0"
     implementation "org.jetbrains:annotations:26.0.2-1"
+
     compileOnly "org.spigotmc:spigot-api:1.19-R0.1-20220725.090125-47"
+    compileOnly "org.apache.commons:commons-lang3:3.13.0"
     // 1.10-1.11: no .spigot() on commandSender
     // 1.12-1.15: has no HTML colors
     compileOnly "com.github.retrooper:packetevents-spigot:2.11.1"
 
-    implementation "com.github.AvarionMC:yaml:1.2.1"
+    implementation "org.avarion:yaml:1.2.1"
 }
 
 version = determineVersion()
 project.ext.pluginVersion = version
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'

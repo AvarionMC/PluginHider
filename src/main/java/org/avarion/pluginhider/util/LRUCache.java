@@ -2,11 +2,9 @@ package org.avarion.pluginhider.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+
 
 public class LRUCache<K, V> implements Map<K, V> {
     private final Map<K, TimestampedValue<V>> cache;
@@ -16,7 +14,7 @@ public class LRUCache<K, V> implements Map<K, V> {
         this.cache = new LinkedHashMap<>(maxSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, TimestampedValue<V>> eldest) {
-                return size() > maxSize || isExpired(eldest.getValue());
+                return size() > maxSize && isExpired(eldest.getValue());
             }
         };
     }
@@ -29,27 +27,29 @@ public class LRUCache<K, V> implements Map<K, V> {
                 cache.remove(key);
                 return null;
             }
-            return value.value();
+            return value.value;
         }
         return null;
     }
 
     public V put(K key, V value) {
         TimestampedValue<V> oldValue = cache.put(key, new TimestampedValue<>(value));
-        return (oldValue != null) ? oldValue.value() : null;
+        return (oldValue != null) ? oldValue.value : null;
     }
 
     public V remove(Object key) {
         TimestampedValue<V> value = cache.remove(key);
         if (value != null && !isExpired(value)) {
-            return value.value();
+            return value.value;
         }
         return null;
     }
 
     @Override
     public void putAll(@NotNull Map<? extends K, ? extends V> m) {
-        throw new UnsupportedOperationException();
+        for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
     }
 
     public void clear() {
@@ -62,39 +62,85 @@ public class LRUCache<K, V> implements Map<K, V> {
 
     @Override
     public @NotNull Collection<V> values() {
-        throw new UnsupportedOperationException();
+        List<V> values = new ArrayList<>();
+        for (TimestampedValue<V> value : cache.values()) {
+            if (!isExpired(value)) {
+                values.add(value.value);
+            }
+        }
+        return values;
+    }
+
+    class Entry implements Map.Entry<K, V> {
+        K key;
+        V value;
+
+        Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+
+        public K setKey(K key) {
+            K oldKey = this.key;
+            this.key = key;
+            return oldKey;
+        }
+
+        public V setValue(V value) {
+            V oldValue = this.value;
+            this.value = value;
+            return oldValue;
+        }
     }
 
     @Override
-    public @NotNull Set<Entry<K, V>> entrySet() {
-        throw new UnsupportedOperationException();
+    public @NotNull Set<Map.Entry<K, V>> entrySet() {
+        HashSet<Map.Entry<K, V>> entries = new HashSet<>();
+        for (Map.Entry<K, TimestampedValue<V>> entry : cache.entrySet()) {
+            if (!isExpired(entry.getValue())) {
+                entries.add(new Entry(entry.getKey(), entry.getValue().value));
+            }
+        }
+        return entries;
     }
 
     public int size() {
-        throw new UnsupportedOperationException();
+        return cache.size();
     }
 
     public boolean isEmpty() {
-        throw new UnsupportedOperationException();
+        return cache.isEmpty();
     }
 
     @Override
     public boolean containsKey(Object key) {
-        throw new UnsupportedOperationException();
+        return cache.containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        throw new UnsupportedOperationException();
+        return cache.containsValue(value);
     }
 
     private boolean isExpired(@NotNull TimestampedValue<V> value) {
-        return System.nanoTime() - value.timestamp() > expirationTimeNanos;
+        return System.nanoTime() - value.timestamp > expirationTimeNanos;
     }
 
-    private record TimestampedValue<V>(V value, long timestamp) {
+    private static class TimestampedValue<V> {
+        final V value;
+        final long timestamp;
+
         public TimestampedValue(V value) {
-            this(value, System.nanoTime());
+            this.value = value;
+            this.timestamp = System.nanoTime();
         }
     }
 }
