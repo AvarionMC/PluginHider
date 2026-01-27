@@ -39,7 +39,7 @@ dependencies {
     compileOnly "org.apache.commons:commons-lang3:3.20.0"
     // 1.10-1.11: no .spigot() on commandSender
     // 1.12-1.15: has no HTML colors
-    compileOnly "com.github.retrooper:packetevents-spigot:2.11.1"
+    compileOnly "com.github.retrooper:packetevents-spigot:2.11.2"
 
     implementation "org.avarion:yaml:1.4.5"
 }
