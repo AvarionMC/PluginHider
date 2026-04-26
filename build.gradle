@@ -41,13 +41,16 @@ dependencies {
     // 1.12-1.15: has no HTML colors
     compileOnly "com.github.retrooper:packetevents-spigot:2.11.2"
 
-    implementation "org.avarion:yaml:1.4.5"
+    implementation "org.avarion:yaml:2.0.0"
 }
 
 version = determineVersion()
 project.ext.pluginVersion = version
 
-java.sourceCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
