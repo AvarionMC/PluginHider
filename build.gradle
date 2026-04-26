@@ -43,7 +43,7 @@ dependencies {
     // 1.17+: minimum supported runtime — Paper/Spigot 1.17 is the lowest MC
     //        version that runs on Java 17 (1.18+ requires Java 17 by default,
     //        1.20.5+ requires Java 21+).
-    compileOnly "com.github.retrooper:packetevents-spigot:2.11.2"
+    compileOnly "com.github.retrooper:packetevents-spigot:2.12.1"
 
     implementation "org.avarion:yaml:2.0.0"
 }
