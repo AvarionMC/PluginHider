@@ -116,25 +116,13 @@ public class Settings extends YamlFileInterface {
     public boolean shouldAllowColonTabcompletion = false;
 
     @YamlComment(
-            "When true, server operators (ops) can see all plugin commands regardless of hide/show settings.\n"
-            + "Set to false if you want hiding rules to apply to operators as well."
+            "Operator visibility rules.\n"
+            + "- canSeeEverything: when true, server operators see all plugin commands regardless of hide/show.\n"
+            + "- whitelist: UUIDs that always see all commands (overrides ops/canSeeEverything=false).\n"
+            + "- blacklist: UUIDs always treated as normal users (overrides ops/canSeeEverything=true)."
     )
-    @YamlKey("operator_can_see_everything")
-    public boolean operatorCanSeeEverything = false;
-
-    @YamlComment(
-            "List of operator UUIDs that should see all commands, even when he is not an operator or operator_can_see_everything is false.\n"
-            + "Format: List of player UUIDs"
-    )
-    @YamlKey("whitelisted_uuids")
-    public Set<UUID> whitelist = Set.of();
-
-    @YamlComment(
-            "List of operator UUIDs that should always be treated as normal users, even when he's an operator and operator_can_see_everything is true.\n"
-            + "Format: List of player UUIDs"
-    )
-    @YamlKey("blacklisted_uuids")
-    public Set<UUID> blacklist = Set.of();
+    @YamlKey("operatorRules")
+    public OperatorRules operatorRules = OperatorRules.DEFAULT;
 
     public boolean hideAll = true;
 
@@ -164,8 +152,11 @@ public class Settings extends YamlFileInterface {
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
-        whitelist = cleanUp(whitelist);
-        blacklist = cleanUp(blacklist);
+        operatorRules = new OperatorRules(
+                operatorRules.canSeeEverything(),
+                cleanUp(operatorRules.whitelist()),
+                cleanUp(operatorRules.blacklist())
+        );
 
         hideAll = hidePlugins.contains("*");
 
@@ -178,13 +169,13 @@ public class Settings extends YamlFileInterface {
         }
 
         UUID id = player.getUniqueId();
-        if (whitelist.contains(id)) {
+        if (operatorRules.whitelist().contains(id)) {
             return true;
         }
-        if (blacklist.contains(id)) {
+        if (operatorRules.blacklist().contains(id)) {
             return false;
         }
 
-        return operatorCanSeeEverything && player.isOp();
+        return operatorRules.canSeeEverything() && player.isOp();
     }
 }

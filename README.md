@@ -3,9 +3,11 @@
 Hide your Minecraft plugins from prying eyes. The plugin commands can still be executed, but they won't show up in tab
 completion, `/version <plugin name>` command results, or when players use the `/plugins` command.
 
-## Required:
+## Requirements
 
-! [***PacketEvents v2.4.0+***](https://www.spigotmc.org/resources/packetevents-api.80279/) !
+- **Minecraft server:** Spigot/Paper **1.17 or later** (1.17 is the lowest version that runs on Java 17).
+- **Java:** 17 or later.
+- **PacketEvents:** [***v2.4.0+***](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
 ## Configuration
 
@@ -29,19 +31,16 @@ show_plugins:
 # When false, only the command name without the plugin prefix will be shown.
 should_allow_colon_tabcompletion: false
 
-# When true, server operators (ops) can see all plugin commands regardless of hide/show settings.
-# Set to false if you want hiding rules to apply to operators as well.
-operator_can_see_everything: false
-
-# List of player UUIDs that should see all commands, even when not operators
-# or when operator_can_see_everything is false.
-whitelisted_uuids:
-   - 01234567-89ab-cdef-0123-456789abcdef
-
-# List of player UUIDs that should always be treated as normal users, even when
-# they're operators and operator_can_see_everything is true.
-blacklisted_uuids:
-   - fedcba98-7654-3210-fedc-ba9876543210
+# Operator visibility rules.
+# - canSeeEverything: when true, ops see all plugin commands regardless of hide/show.
+# - whitelist: UUIDs that always see all commands (overrides ops/canSeeEverything=false).
+# - blacklist: UUIDs always treated as normal users (overrides ops/canSeeEverything=true).
+operatorRules:
+   canSeeEverything: false
+   whitelist:
+      - 01234567-89ab-cdef-0123-456789abcdef
+   blacklist:
+      - fedcba98-7654-3210-fedc-ba9876543210
 ```
 
 ### Bukkit and Minecraft Commands Visibility
@@ -138,13 +137,13 @@ Let's say you have these plugins installed:
 PluginHider provides fine-grained control over which players can see all plugins:
 
 - **Operator Control**:
-   - `operator_can_see_everything`: When true, server operators can see all plugins regardless of hide/show settings
+   - `operatorRules.canSeeEverything`: When true, server operators can see all plugins regardless of hide/show settings
 
 - **Whitelist/Blacklist System**:
-   - `whitelisted_uuids`: Players who can see all plugins, even when not operators or when `operator_can_see_everything`
-     is false
-   - `blacklisted_uuids`: Players who are treated as normal users and can't see hidden plugins, even when they're
-     operators and `operator_can_see_everything` is true
+   - `operatorRules.whitelist`: Players who can see all plugins, even when not operators or when
+     `operatorRules.canSeeEverything` is false
+   - `operatorRules.blacklist`: Players who are treated as normal users and can't see hidden plugins, even when
+     they're operators and `operatorRules.canSeeEverything` is true
 
 This system gives you precise control over who can see what, regardless of their operator status.
 
