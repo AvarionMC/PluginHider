@@ -39,15 +39,22 @@ dependencies {
     compileOnly "org.apache.commons:commons-lang3:3.20.0"
     // 1.10-1.11: no .spigot() on commandSender
     // 1.12-1.15: has no HTML colors
+    // 1.16: requires Java 8/11; will not load Java 17 bytecode (this build).
+    // 1.17+: minimum supported runtime — Paper/Spigot 1.17 is the lowest MC
+    //        version that runs on Java 17 (1.18+ requires Java 17 by default,
+    //        1.20.5+ requires Java 21+).
     compileOnly "com.github.retrooper:packetevents-spigot:2.12.1"
 
-    implementation "org.avarion:yaml:1.4.5"
+    implementation "org.avarion:yaml:2.0.0"
 }
 
 version = determineVersion()
 project.ext.pluginVersion = version
 
-java.sourceCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'

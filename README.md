@@ -3,9 +3,11 @@
 Hide your Minecraft plugins from prying eyes. The plugin commands can still be executed, but they won't show up in tab
 completion, `/version <plugin name>` command results, or when players use the `/plugins` command.
 
-## Required:
+## Requirements
 
-! [***PacketEvents v2.4.0+***](https://www.spigotmc.org/resources/packetevents-api.80279/) !
+- **Minecraft server:** Spigot/Paper **1.17 or later** (1.17 is the lowest version that runs on Java 17).
+- **Java:** 17 or later.
+- **PacketEvents:** [***v2.4.0+***](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
 ## Configuration
 
