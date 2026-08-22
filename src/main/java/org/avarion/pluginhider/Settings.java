@@ -117,22 +117,12 @@ public class Settings extends YamlFileInterface {
     public boolean shouldAllowColonTabcompletion = false;
 
     @YamlComment("""
-            When true, server operators (ops) can see all plugin commands regardless of hide/show settings.
-            Set to false if you want hiding rules to apply to operators as well.""")
-    @YamlKey("operator_can_see_everything")
-    public boolean operatorCanSeeEverything = false;
-
-    @YamlComment("""
-            List of operator UUIDs that should see all commands, even when he is not an operator or operator_can_see_everything is false.
+            List of player UUIDs that always see every plugin and command, in addition to the server
+            console. This is the ONLY way to see the full list — operators are deliberately treated as
+            normal players, so op status never reveals hidden plugins.
             Format: List of player UUIDs""")
     @YamlKey("whitelisted_uuids")
     public Set<UUID> whitelist = Set.of();
-
-    @YamlComment("""
-            List of operator UUIDs that should always be treated as normal users, even when he's an operator and operator_can_see_everything is true.
-            Format: List of player UUIDs""")
-    @YamlKey("blacklisted_uuids")
-    public Set<UUID> blacklist = Set.of();
 
     public boolean hideAll = true;
 
@@ -163,26 +153,18 @@ public class Settings extends YamlFileInterface {
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
         whitelist = cleanUp(whitelist);
-        blacklist = cleanUp(blacklist);
 
         hideAll = hidePlugins.contains("*");
 
         super.save(config);
     }
 
-    public boolean isOpLike(@Nullable Player player) {
-        if (player == null) {
-            return false;
-        }
-
-        UUID id = player.getUniqueId();
-        if (whitelist.contains(id)) {
-            return true;
-        }
-        if (blacklist.contains(id)) {
-            return false;
-        }
-
-        return operatorCanSeeEverything && player.isOp();
+    /**
+     * Whether this player may see every plugin and command. Only explicitly whitelisted players
+     * qualify — being an operator grants nothing here, so op status can't be used to enumerate
+     * hidden plugins. (The server console is handled separately and always sees everything.)
+     */
+    public boolean canSeeEverything(@Nullable Player player) {
+        return player != null && whitelist.contains(player.getUniqueId());
     }
 }

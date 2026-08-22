@@ -21,7 +21,7 @@ public interface MyCustomCommand {
 
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            if (PluginHider.settings.isOpLike(player)) {
+            if (PluginHider.settings.canSeeEverything(player)) {
                 return true;
             }
         }

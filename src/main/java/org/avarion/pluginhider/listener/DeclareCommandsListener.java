@@ -33,7 +33,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             return;
         }
 
-        if (PluginHider.settings.isOpLike(event.getPlayer())) {
+        if (PluginHider.settings.canSeeEverything(event.getPlayer())) {
             return;
         }
 

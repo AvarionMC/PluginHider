@@ -33,19 +33,11 @@ show_plugins:
 # When false, only the command name without the plugin prefix will be shown.
 should_allow_colon_tabcompletion: false
 
-# When true, server operators (ops) can see all plugin commands regardless of hide/show settings.
-# Set to false if you want hiding rules to apply to operators as well.
-operator_can_see_everything: false
-
-# List of player UUIDs that should see all commands, even when not operators
-# or when operator_can_see_everything is false.
+# List of player UUIDs that always see every plugin and command, in addition to the
+# server console. This is the ONLY way to see the full list: operators are treated as
+# normal players, so op status never reveals hidden plugins.
 whitelisted_uuids:
    - 01234567-89ab-cdef-0123-456789abcdef
-
-# List of player UUIDs that should always be treated as normal users, even when
-# they're operators and operator_can_see_everything is true.
-blacklisted_uuids:
-   - fedcba98-7654-3210-fedc-ba9876543210
 ```
 
 ### Bukkit and Minecraft Commands Visibility
@@ -139,18 +131,15 @@ Let's say you have these plugins installed:
 
 ### Player Permission Control
 
-PluginHider provides fine-grained control over which players can see all plugins:
+Only two parties ever see the full, unfiltered list:
 
-- **Operator Control**:
-   - `operator_can_see_everything`: When true, server operators can see all plugins regardless of hide/show settings
+- The **server console**.
+- Any UUID in **`whitelisted_uuids`**.
 
-- **Whitelist/Blacklist System**:
-   - `whitelisted_uuids`: Players who can see all plugins, even when not operators or when `operator_can_see_everything`
-     is false
-   - `blacklisted_uuids`: Players who are treated as normal users and can't see hidden plugins, even when they're
-     operators and `operator_can_see_everything` is true
-
-This system gives you precise control over who can see what, regardless of their operator status.
+**Operators get no special treatment** — an op sees exactly what a normal player sees. This is
+deliberate: op status is easy to grant and easy to abuse, so it must never become a way to
+enumerate the hidden plugins. If you want a specific person to see everything, add their UUID to
+`whitelisted_uuids`.
 
 ### Tab Completion Format
 
