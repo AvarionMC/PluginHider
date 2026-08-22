@@ -55,7 +55,13 @@ public class Caches {
 
     @Contract(pure = true)
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
-        return shouldShowPlugin.getOrDefault(Util.cleanupWord(pluginName), false);
+        final String cleaned = Util.cleanupWord(pluginName);
+        final Boolean known = shouldShowPlugin.get(cleaned);
+        // A plugin missing from the snapshot (no commands, failed to load, or registered after the
+        // startup sweep) must still follow the hide/show rules instead of defaulting to hidden —
+        // otherwise a plugin that isn't hidden would vanish from a non-op's /plugins, which is itself
+        // a tell that something is filtering.
+        return known != null ? known : shouldShowPlugin__Update(cleaned);
     }
 
     @Contract(pure = true)
