@@ -60,7 +60,12 @@ public class PluginHider extends JavaPlugin {
 
             Bukkit.getScheduler().runTaskLater(
                     PluginHider.inst, task -> {
-                        Caches.update();
+                        // Invalidate the built mapping so the next use rebuilds it from scratch —
+                        // a live /pluginhider reload then also picks up newly added plugins,
+                        // aliases and command links, not just the changed settings. Every reader
+                        // calls Caches.load() first, so the rebuild happens lazily and safely
+                        // (on the main thread once the help map is ready).
+                        Caches.reload();
                     }, 1
             );
         }

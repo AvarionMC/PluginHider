@@ -21,4 +21,10 @@ public class Logger {
     public void error(String message, Object... args) {
         logger.log(Level.SEVERE, message, args);
     }
+
+    public void error(String message, Throwable thrown) {
+        // j.u.l only prints the stack trace when the Throwable is passed as the dedicated
+        // parameter; routing it through the Object... overload would silently drop it.
+        logger.log(Level.SEVERE, message, thrown);
+    }
 }

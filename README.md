@@ -5,9 +5,11 @@ completion, `/version <plugin name>` command results, or when players use the `/
 
 ## Requirements
 
-- **Minecraft server:** Spigot/Paper **1.17 or later** (1.17 is the lowest version that runs on Java 17).
-- **Java:** 17 or later.
-- **PacketEvents:** [***v2.4.0+***](https://www.spigotmc.org/resources/packetevents-api.80279/)
+- **Minecraft server:** **Paper 1.21.11** (or a compatible Paper build). PluginHider reproduces
+  Paper's own `/plugins` and `/version` output so hidden plugins are indistinguishable from ones
+  that aren't installed; it is Paper-only and no longer supports Spigot.
+- **Java:** 21 or later.
+- **PacketEvents:** [a build recent enough to support your server version](https://www.spigotmc.org/resources/packetevents-api.80279/) (PluginHider is built against ***v2.13.0***; older builds may not know your protocol version).
 
 ## Configuration
 
@@ -31,19 +33,17 @@ show_plugins:
 # When false, only the command name without the plugin prefix will be shown.
 should_allow_colon_tabcompletion: false
 
-# When true, server operators (ops) can see all plugin commands regardless of hide/show settings.
-# Set to false if you want hiding rules to apply to operators as well.
-operator_can_see_everything: false
-
-# List of player UUIDs that should see all commands, even when not operators
-# or when operator_can_see_everything is false.
-whitelisted_uuids:
-   - 01234567-89ab-cdef-0123-456789abcdef
-
-# List of player UUIDs that should always be treated as normal users, even when
-# they're operators and operator_can_see_everything is true.
-blacklisted_uuids:
-   - fedcba98-7654-3210-fedc-ba9876543210
+# Per-player visibility, on top of the global rules above. Maps a player UUID to what
+# that player may additionally see (tab-completion, /plugins, /version, /help).
+#   - "*"           -> that player sees everything.
+#   - a plugin list -> that player also sees just those plugins (and their commands).
+# Operators get no special treatment; only the server console and the UUIDs listed here
+# ever see more than a normal player.
+player_plugins:
+   00000000-0000-0000-0000-000000000000: "*"
+   11111111-1111-1111-1111-111111111111:
+      - Essentials
+      - WorldEdit
 ```
 
 ### Bukkit and Minecraft Commands Visibility
@@ -137,18 +137,35 @@ Let's say you have these plugins installed:
 
 ### Player Permission Control
 
-PluginHider provides fine-grained control over which players can see all plugins:
+By default only the **server console** sees the full, unfiltered list. Everyone else — **operators
+included** — gets the filtered view. This is deliberate: op status is easy to grant and easy to
+abuse, so it must never become a way to enumerate the hidden plugins.
 
-- **Operator Control**:
-   - `operator_can_see_everything`: When true, server operators can see all plugins regardless of hide/show settings
+To give specific people more, list their UUID under **`player_plugins`**:
 
-- **Whitelist/Blacklist System**:
-   - `whitelisted_uuids`: Players who can see all plugins, even when not operators or when `operator_can_see_everything`
-     is false
-   - `blacklisted_uuids`: Players who are treated as normal users and can't see hidden plugins, even when they're
-     operators and `operator_can_see_everything` is true
+```yaml
+player_plugins:
+   # This player sees everything (the equivalent of the old whitelist).
+   00000000-0000-0000-0000-000000000000: "*"
+   # This player additionally sees just Essentials and WorldEdit — in tab-completion,
+   # /plugins, /version and /help — even though everything is hidden globally.
+   11111111-1111-1111-1111-111111111111:
+      - Essentials
+      - WorldEdit
+```
 
-This system gives you precise control over who can see what, regardless of their operator status.
+This grants **visibility**, not permission: whether a player may actually *run* a command is still
+governed by Bukkit permissions. `player_plugins` only controls what shows up for them.
+
+A handy pattern is to hide everything and reveal per-person:
+
+```yaml
+hide_plugins:
+   - '*'
+player_plugins:
+   <moderator-uuid>:
+      - Essentials
+```
 
 ### Tab Completion Format
 

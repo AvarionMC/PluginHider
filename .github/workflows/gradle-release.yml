@@ -25,7 +25,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Set outputs
@@ -52,7 +52,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build with Gradle
-        run: ./gradlew -Prevision=${CURRENT_VERSION} clean jar
+        run: ./gradlew -Prevision=${CURRENT_VERSION} clean shadowJar
 
       - name: Add jar file to release
         run: gh release upload "${TAG}" "build/libs/PluginHider-${CURRENT_VERSION}.jar" --clobber

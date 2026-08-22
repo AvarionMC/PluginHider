@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.avarion.pluginhider.util.CraftBukkitVersionUtil.isInstance;
 import static org.avarion.pluginhider.util.Util.cleanupCommand;
@@ -24,12 +25,22 @@ public class Caches {
     private Caches() {
     }
 
-    private final static Map<String, Boolean> shouldShowCmd = new HashMap<>();
-    private final static Map<String, Boolean> shouldShowPlugin = new HashMap<>();
+    // Published to readers (packet/command threads) as immutable snapshots swapped in via a single
+    // volatile write, so a reader never observes a partially-rebuilt map.
+    private static volatile Map<String, Boolean> shouldShowCmd = Map.of();
+    private static volatile Map<String, Boolean> shouldShowPlugin = Map.of();
+    // Build-time state, only ever touched under this class's monitor (load/reload/update).
     private final static Map<String, String> cacheCommand2Plugin = new HashMap<>();
     private final static Map<String, Set<String>> cachePlugin2Commands = new HashMap<>();
 
-    private static boolean isLoaded = false;
+    // Immutable snapshot of command name -> owning plugin (lowercased), for per-player grant checks.
+    private static volatile Map<String, String> commandOwner = Map.of();
+
+    // Plugins that expose no commands (so they never appear in the help map); discovered by the
+    // updatePlugins() sweep and folded into the show/hide snapshot on the next update().
+    private static final Set<String> extraPlugins = ConcurrentHashMap.newKeySet();
+
+    private static volatile boolean isLoaded = false;
     private final static int TIMEOUT_FOR_CHECKING_PLUGINS = 1000 * 60 * 5;
 
     private static final Map<String, String> defaultPackageNames = Map.of(
@@ -47,12 +58,46 @@ public class Caches {
 
     @Contract(pure = true)
     public static boolean shouldShowPlugin(@Nullable final String pluginName) {
-        return shouldShowPlugin.getOrDefault(Util.cleanupWord(pluginName), false);
+        final String cleaned = Util.cleanupWord(pluginName);
+        final Boolean known = shouldShowPlugin.get(cleaned);
+        // A plugin missing from the snapshot (no commands, failed to load, or registered after the
+        // startup sweep) must still follow the hide/show rules instead of defaulting to hidden —
+        // otherwise a plugin that isn't hidden would vanish from a non-op's /plugins, which is itself
+        // a tell that something is filtering.
+        return known != null ? known : shouldShowPlugin__Update(cleaned);
     }
 
     @Contract(pure = true)
     public static boolean shouldShowCommand(@Nullable final String command) {
         return shouldShowCmd.getOrDefault(command, false);
+    }
+
+    /** As {@link #shouldShowPlugin(String)}, plus any plugin this specific player was granted. */
+    public static boolean shouldShowPlugin(@Nullable final UUID player, @Nullable final String pluginName) {
+        if (shouldShowPlugin(pluginName)) {
+            return true;
+        }
+        final Set<String> granted = PluginHider.settings.grantsFor(player);
+        return granted.contains("*") || granted.contains(Util.cleanupWord(pluginName));
+    }
+
+    /** As {@link #shouldShowCommand(String)}, plus commands owned by a plugin this player was granted. */
+    public static boolean shouldShowCommand(@Nullable final UUID player, @Nullable final String command) {
+        if (shouldShowCommand(command)) {
+            return true;
+        }
+        final Set<String> granted = PluginHider.settings.grantsFor(player);
+        if (granted.contains("*")) {
+            return true;
+        }
+        if (granted.isEmpty() || command == null) {
+            return false;
+        }
+        String owner = commandOwner.get(command);
+        if (owner == null) {
+            owner = commandOwner.get(cleanupCommand(command));
+        }
+        return owner != null && granted.contains(owner);
     }
 
     private static void registerCommand(Command command, @NotNull Map<String, Command> cmd2Command) {
@@ -121,16 +166,13 @@ public class Caches {
         catch (RuntimeException ignored) {
         }
 
-        var x = ReflectionUtils.getFields(topic.getClass());
-        var name = topic.getName();
         PluginHider.logger.error("Unknown topic type (2): " + topic.getClass().getName());
     }
 
-    public static void load() {
+    public static synchronized void load() {
         if (isLoaded) {
             return;
         }
-        isLoaded = true;
 
         HelpMap helpMap = Bukkit.getHelpMap();
         Map<String, Set<String>> aliases = new HashMap<>();
@@ -142,8 +184,13 @@ public class Caches {
 
         addAliases(aliases, cmd2Command);
         convertMapToCache(cmd2Command);
+        commandOwner = Map.copyOf(cacheCommand2Plugin);
 
         update(); // First time update
+
+        // Latch as loaded only after a successful build, so a transient failure retries on the next
+        // call instead of permanently disabling hiding.
+        isLoaded = true;
     }
 
     private static void addElement(final String pluginName, final String cmd) {
@@ -184,6 +231,12 @@ public class Caches {
         while (!queue.isEmpty()) {
             String cmd = queue.remove(0);
             Command cmd2 = cmd2Command.get(cmd);
+            if (cmd2 == null) {
+                // e.g. a CustomHelpTopic registered under a name with no backing Command. Treat it
+                // as a core command (shown by default) instead of NPE'ing out of the whole build.
+                addElement("bukkit", cmd);
+                continue;
+            }
             String pkg = cmd2.getClass().getPackage().getName();
 
             if (cmd2 instanceof PluginCommand) {
@@ -254,14 +307,7 @@ public class Caches {
         return !PluginHider.settings.hideAll; // if all plugins are hidden;
     }
 
-    private static <K, V> void repopulate(@NotNull Map<K, V> target, Map<K, V> source) {
-        synchronized (target) { // Fine here, as it's only used in "update"
-            target.clear();
-            target.putAll(source);
-        }
-    }
-
-    public static void update() {
+    public static synchronized void update() {
         Map<String, Boolean> newShouldShowPlugin = new HashMap<>();
         Map<String, Boolean> newShouldShowCmd = new HashMap<>();
 
@@ -271,7 +317,7 @@ public class Caches {
             var show = shouldShowPlugin__Update(plugin);
 
             newShouldShowPlugin.putIfAbsent(plugin, show);
-            for (var cmd : cachePlugin2Commands.get(plugin)) {
+            for (var cmd : entry.getValue()) {
                 newShouldShowCmd.putIfAbsent(cmd, show);
                 newShouldShowCmd.putIfAbsent(cleanupCommand(cmd), show);
                 newShouldShowCmd.putIfAbsent(plugin + ":" + cmd, show && colonsAllowed);
@@ -279,8 +325,23 @@ public class Caches {
             }
         }
 
-        repopulate(shouldShowPlugin, newShouldShowPlugin);
-        repopulate(shouldShowCmd, newShouldShowCmd);
+        for (String plugin : extraPlugins) {
+            newShouldShowPlugin.putIfAbsent(plugin, shouldShowPlugin__Update(plugin));
+        }
+
+        // Publish immutable snapshots via a single volatile write each, so readers on the packet
+        // thread never observe a half-cleared map (the old clear()+putAll() had that window).
+        shouldShowPlugin = Map.copyOf(newShouldShowPlugin);
+        shouldShowCmd = Map.copyOf(newShouldShowCmd);
+    }
+
+    public static synchronized void reload() {
+        // Invalidate the built command/plugin mapping so the next load() rebuilds it from scratch,
+        // picking up new plugins, aliases and settings. Every reader calls load() before reading a
+        // snapshot, so it will always see a freshly-built one.
+        isLoaded = false;
+        cacheCommand2Plugin.clear();
+        cachePlugin2Commands.clear();
     }
 
     public static void dump() {
@@ -309,22 +370,23 @@ public class Caches {
             public void run() {
                 if (System.currentTimeMillis() > stopAt) {
                     cancel();
+                    return;
                 }
 
-                List<String> newPlugins = new ArrayList<>();
+                // Build the cache proactively on the main thread once the help map is ready
+                // (cheap no-op once loaded), instead of waiting for the first player to join.
+                load();
+
+                boolean added = false;
                 for (var plugin : Bukkit.getPluginManager().getPlugins()) {
                     String name = Util.cleanupWord(plugin.getName());
-                    if (!shouldShowPlugin.containsKey(name)) {
-                        newPlugins.add(name);
+                    if (!shouldShowPlugin.containsKey(name) && extraPlugins.add(name)) {
+                        added = true;
                     }
                 }
 
-                if (!newPlugins.isEmpty()) {
-                    synchronized (shouldShowPlugin) {
-                        for (var pluginName : newPlugins) {
-                            shouldShowPlugin.computeIfAbsent(pluginName, Caches::shouldShowPlugin__Update);
-                        }
-                    }
+                if (added) {
+                    update();
                 }
             }
         }.runTaskTimer(PluginHider.inst, 10, 10);

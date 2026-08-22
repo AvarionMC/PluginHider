@@ -32,11 +32,10 @@ public class Updater {
         try {
             url = new URI("https://api.spigotmc.org/legacy/update.php?resource=" + pluginId).toURL();
 
-            InputStream inputStream = url.openStream();
-            Scanner scanner = new Scanner(inputStream);
-
-            if (scanner.hasNext()) {
-                return new Version(scanner.next());
+            try (InputStream inputStream = url.openStream(); Scanner scanner = new Scanner(inputStream)) {
+                if (scanner.hasNext()) {
+                    return new Version(scanner.next());
+                }
             }
         }
         catch (URISyntaxException | IOException e) {
