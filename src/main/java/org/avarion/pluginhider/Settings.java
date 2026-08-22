@@ -171,28 +171,33 @@ public class Settings extends YamlFileInterface {
 
         Map<UUID, Set<String>> result = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : raw.entrySet()) {
-            if (entry.getKey() == null || entry.getValue() == null) {
-                continue;
+            final UUID id = parseUuidOrNull(entry.getKey());
+            if (id != null && entry.getValue() != null) {
+                result.put(id, normalizePlugins(entry.getValue()));
             }
-
-            final UUID id;
-            try {
-                id = UUID.fromString(entry.getKey().trim());
-            }
-            catch (IllegalArgumentException ex) {
-                PluginHider.logger.warning("Ignoring invalid UUID in player_plugins: " + entry.getKey());
-                continue;
-            }
-
-            // Keep "*" verbatim (it means "everything"); lowercase real plugin names to match lookups.
-            Set<String> plugins = entry.getValue()
-                                       .stream()
-                                       .filter(Objects::nonNull)
-                                       .map(p -> p.equals("*") ? "*" : p.toLowerCase(Locale.ENGLISH))
-                                       .collect(Collectors.toUnmodifiableSet());
-            result.put(id, plugins);
         }
         return Map.copyOf(result);
+    }
+
+    private static @Nullable UUID parseUuidOrNull(@Nullable String key) {
+        if (key == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(key.trim());
+        }
+        catch (IllegalArgumentException ex) {
+            PluginHider.logger.warning("Ignoring invalid UUID in player_plugins: " + key);
+            return null;
+        }
+    }
+
+    // Keep "*" verbatim (it means "everything"); lowercase real plugin names to match lookups.
+    private static @NotNull Set<String> normalizePlugins(@NotNull Set<String> plugins) {
+        return plugins.stream()
+                      .filter(Objects::nonNull)
+                      .map(p -> p.equals("*") ? "*" : p.toLowerCase(Locale.ENGLISH))
+                      .collect(Collectors.toUnmodifiableSet());
     }
 
     /** The plugins this player was explicitly granted (lowercased, or "*" for everything); never null. */
