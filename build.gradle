@@ -26,6 +26,7 @@ repositories {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
 
+    maven { url = uri('https://repo.papermc.io/repository/maven-public/') }
     maven { url = uri('https://jitpack.io/') }
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://repo.codemc.io/repository/avarionmc/") }
@@ -35,14 +36,12 @@ dependencies {
     implementation "org.bstats:bstats-bukkit:3.2.1"
     implementation "org.jetbrains:annotations:26.1.0"
 
-    compileOnly "org.spigotmc:spigot-api:1.19-R0.1-20220725.090125-47"
+    // Paper-only: we reproduce Paper's own /plugins and /version output (Adventure
+    // components, hover/click, exact colors) so hidden plugins are indistinguishable
+    // from a server where they simply aren't installed. That requires the Paper API
+    // and its Java 21 baseline, dropping the old Spigot 1.17+ compatibility.
+    compileOnly "io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT"
     compileOnly "org.apache.commons:commons-lang3:3.20.0"
-    // 1.10-1.11: no .spigot() on commandSender
-    // 1.12-1.15: has no HTML colors
-    // 1.16: requires Java 8/11; will not load Java 17 bytecode (this build).
-    // 1.17+: minimum supported runtime — Paper/Spigot 1.17 is the lowest MC
-    //        version that runs on Java 17 (1.18+ requires Java 17 by default,
-    //        1.20.5+ requires Java 21+).
     compileOnly "com.github.retrooper:packetevents-spigot:2.13.0"
 
     implementation "org.avarion:yaml:2.2.1"
@@ -59,8 +58,8 @@ version = determineVersion()
 project.ext.pluginVersion = version
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 tasks.withType(JavaCompile).configureEach {

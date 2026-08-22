@@ -5,8 +5,10 @@ completion, `/version <plugin name>` command results, or when players use the `/
 
 ## Requirements
 
-- **Minecraft server:** Spigot/Paper **1.17 or later** (1.17 is the lowest version that runs on Java 17).
-- **Java:** 17 or later.
+- **Minecraft server:** **Paper 1.21.11** (or a compatible Paper build). PluginHider reproduces
+  Paper's own `/plugins` and `/version` output so hidden plugins are indistinguishable from ones
+  that aren't installed; it is Paper-only and no longer supports Spigot.
+- **Java:** 21 or later.
 - **PacketEvents:** [a build recent enough to support your server version](https://www.spigotmc.org/resources/packetevents-api.80279/) (PluginHider is built against ***v2.13.0***; older builds may not know your protocol version).
 
 ## Configuration
