@@ -33,6 +33,9 @@ public class Caches {
     private final static Map<String, String> cacheCommand2Plugin = new HashMap<>();
     private final static Map<String, Set<String>> cachePlugin2Commands = new HashMap<>();
 
+    // Immutable snapshot of command name -> owning plugin (lowercased), for per-player grant checks.
+    private static volatile Map<String, String> commandOwner = Map.of();
+
     // Plugins that expose no commands (so they never appear in the help map); discovered by the
     // updatePlugins() sweep and folded into the show/hide snapshot on the next update().
     private static final Set<String> extraPlugins = ConcurrentHashMap.newKeySet();
@@ -67,6 +70,34 @@ public class Caches {
     @Contract(pure = true)
     public static boolean shouldShowCommand(@Nullable final String command) {
         return shouldShowCmd.getOrDefault(command, false);
+    }
+
+    /** As {@link #shouldShowPlugin(String)}, plus any plugin this specific player was granted. */
+    public static boolean shouldShowPlugin(@Nullable final UUID player, @Nullable final String pluginName) {
+        if (shouldShowPlugin(pluginName)) {
+            return true;
+        }
+        final Set<String> granted = PluginHider.settings.grantsFor(player);
+        return granted.contains("*") || granted.contains(Util.cleanupWord(pluginName));
+    }
+
+    /** As {@link #shouldShowCommand(String)}, plus commands owned by a plugin this player was granted. */
+    public static boolean shouldShowCommand(@Nullable final UUID player, @Nullable final String command) {
+        if (shouldShowCommand(command)) {
+            return true;
+        }
+        final Set<String> granted = PluginHider.settings.grantsFor(player);
+        if (granted.contains("*")) {
+            return true;
+        }
+        if (granted.isEmpty() || command == null) {
+            return false;
+        }
+        String owner = commandOwner.get(command);
+        if (owner == null) {
+            owner = commandOwner.get(cleanupCommand(command));
+        }
+        return owner != null && granted.contains(owner);
     }
 
     private static void registerCommand(Command command, @NotNull Map<String, Command> cmd2Command) {
@@ -153,6 +184,7 @@ public class Caches {
 
         addAliases(aliases, cmd2Command);
         convertMapToCache(cmd2Command);
+        commandOwner = Map.copyOf(cacheCommand2Plugin);
 
         update(); // First time update
 

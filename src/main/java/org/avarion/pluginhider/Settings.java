@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -117,14 +119,25 @@ public class Settings extends YamlFileInterface {
     public boolean shouldAllowColonTabcompletion = false;
 
     @YamlComment("""
-            List of player UUIDs that always see every plugin and command, in addition to the server
-            console. This is the ONLY way to see the full list — operators are deliberately treated as
-            normal players, so op status never reveals hidden plugins.
-            Format: List of player UUIDs""")
-    @YamlKey("whitelisted_uuids")
-    public Set<UUID> whitelist = Set.of();
+            Per-player visibility, on top of the global rules above. Maps a player UUID to what that
+            player may additionally see — in tab-completion, /plugins, /version and /help.
+              - Use "*" to let that player see everything (this replaces the old whitelist).
+              - Or list specific plugins to reveal only those (and their commands) to that player.
+            Operators get no special treatment; only the server console and the UUIDs listed here
+            ever see more than a normal player. Example:
+              player_plugins:
+                00000000-0000-0000-0000-000000000000: "*"
+                11111111-1111-1111-1111-111111111111:
+                  - Essentials
+                  - WorldEdit""")
+    @YamlKey("player_plugins")
+    public Map<String, Set<String>> playerPlugins = Map.of();
 
     public boolean hideAll = true;
+
+    // Normalized form of playerPlugins: parsed UUID -> lowercased plugin names (or "*").
+    // Package-private so same-package tests can seed it without a full config load.
+    volatile Map<UUID, Set<String>> grants = Map.of();
 
     private @NotNull Set<String> makeLowerCase(@Nullable Set<String> entries) {
         if (entries == null) {
@@ -137,14 +150,6 @@ public class Settings extends YamlFileInterface {
                       .collect(Collectors.toUnmodifiableSet());
     }
 
-    private <T> @NotNull Set<T> cleanUp(@Nullable Set<T> entries) {
-        if (entries == null) {
-            return Set.of();
-        }
-
-        return entries.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
-    }
-
     public <T extends YamlFileInterface> void load() throws IOException {
         File config = new File(PluginHider.inst.getDataFolder(), "config.yml");
 
@@ -152,19 +157,55 @@ public class Settings extends YamlFileInterface {
 
         hidePlugins = makeLowerCase(hidePlugins);
         showPlugins = makeLowerCase(showPlugins);
-        whitelist = cleanUp(whitelist);
+        grants = normalizeGrants(playerPlugins);
 
         hideAll = hidePlugins.contains("*");
 
         super.save(config);
     }
 
+    private @NotNull Map<UUID, Set<String>> normalizeGrants(@Nullable Map<String, Set<String>> raw) {
+        if (raw == null) {
+            return Map.of();
+        }
+
+        Map<UUID, Set<String>> result = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : raw.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+
+            final UUID id;
+            try {
+                id = UUID.fromString(entry.getKey().trim());
+            }
+            catch (IllegalArgumentException ex) {
+                PluginHider.logger.warning("Ignoring invalid UUID in player_plugins: " + entry.getKey());
+                continue;
+            }
+
+            // Keep "*" verbatim (it means "everything"); lowercase real plugin names to match lookups.
+            Set<String> plugins = entry.getValue()
+                                       .stream()
+                                       .filter(Objects::nonNull)
+                                       .map(p -> p.equals("*") ? "*" : p.toLowerCase(Locale.ENGLISH))
+                                       .collect(Collectors.toUnmodifiableSet());
+            result.put(id, plugins);
+        }
+        return Map.copyOf(result);
+    }
+
+    /** The plugins this player was explicitly granted (lowercased, or "*" for everything); never null. */
+    public @NotNull Set<String> grantsFor(@Nullable UUID id) {
+        return id == null ? Set.of() : grants.getOrDefault(id, Set.of());
+    }
+
     /**
-     * Whether this player may see every plugin and command. Only explicitly whitelisted players
-     * qualify — being an operator grants nothing here, so op status can't be used to enumerate
-     * hidden plugins. (The server console is handled separately and always sees everything.)
+     * Whether this player may see every plugin and command (a {@code "*"} grant). Being an operator
+     * grants nothing here, so op status can't be used to enumerate hidden plugins. (The server
+     * console is handled separately and always sees everything.)
      */
     public boolean canSeeEverything(@Nullable Player player) {
-        return player != null && whitelist.contains(player.getUniqueId());
+        return player != null && grantsFor(player.getUniqueId()).contains("*");
     }
 }

@@ -1,45 +1,39 @@
 package org.avarion.pluginhider.custom_commands;
 
-import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Caches;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 
 public interface MyCustomCommand {
     /**
-     * Checks if a sender has permission to access a specific item
+     * Whether a plugin is visible to this sender. The console always sees everything; a player sees
+     * the globally-visible plugins plus whatever their per-UUID grant adds; any other sender (e.g.
+     * RCON) gets the plain global view.
      */
-    default <T> boolean isAllowed(CommandSender sender, @NotNull T item, Function<T, Boolean> cacheChecker) {
+    default boolean isAllowedPlugin(CommandSender sender, @NotNull String name) {
         if (sender instanceof ConsoleCommandSender) {
             return true;
         }
-
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            if (PluginHider.settings.canSeeEverything(player)) {
-                return true;
-            }
+        if (sender instanceof Player player) {
+            return Caches.shouldShowPlugin(player.getUniqueId(), name);
         }
-
-        return cacheChecker.apply(item);
+        return Caches.shouldShowPlugin(name);
     }
 
     /**
-     * Checks if a plugin is allowed for the sender
-     */
-    default boolean isAllowedPlugin(CommandSender sender, @NotNull String name) {
-        return isAllowed(sender, name, Caches::shouldShowPlugin);
-    }
-
-    /**
-     * Checks if a command is allowed for the sender
+     * Whether a command is visible to this sender — the command analogue of
+     * {@link #isAllowedPlugin(CommandSender, String)}.
      */
     default boolean isAllowedCommand(CommandSender sender, @NotNull String name) {
-        return isAllowed(sender, name, Caches::shouldShowCommand);
+        if (sender instanceof ConsoleCommandSender) {
+            return true;
+        }
+        if (sender instanceof Player player) {
+            return Caches.shouldShowCommand(player.getUniqueId(), name);
+        }
+        return Caches.shouldShowCommand(name);
     }
 }

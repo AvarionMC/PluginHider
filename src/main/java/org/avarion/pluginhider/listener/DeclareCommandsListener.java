@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 public class DeclareCommandsListener extends PacketListenerAbstract {
@@ -26,21 +27,21 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             return;
         }
 
-        if (!(event.getPlayer() instanceof Player)) {
+        if (!(event.getPlayer() instanceof Player player)) {
             // We can't identify the recipient (e.g. a transient null very early in login), so we
             // can't safely filter. Let the packet through unmodified rather than cancelling it,
             // which would leave that connection with no command tree at all.
             return;
         }
 
-        if (PluginHider.settings.canSeeEverything(event.getPlayer())) {
+        if (PluginHider.settings.canSeeEverything(player)) {
             return;
         }
 
         Caches.load();
 
         try {
-            Internal internal = new Internal(event);
+            Internal internal = new Internal(event, player.getUniqueId());
             filter(internal, internal.rootNode, false);
             internal.packet.setNodes(internal.newList);
             internal.packet.setRootIndex(0);
@@ -103,7 +104,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             }
 
             final String name = child.getName().orElse("");
-            if (alwaysAdd || Caches.shouldShowCommand(name)) {
+            if (alwaysAdd || Caches.shouldShowCommand(data.playerId, name)) {
                 if (data.indexTranslations.containsKey(idx)) {
                     // Already in the list!
                     newChildren.add(data.indexTranslations.get(idx));
@@ -127,11 +128,13 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
         private final WrapperPlayServerDeclareCommands packet;
         private final List<Node> nodes;
         private final Node rootNode;
+        private final UUID playerId;
         private final List<Node> newList = new ArrayList<>();
         private final Map<Integer, Integer> indexTranslations = new HashMap<>();
         // Mapping from original index -> new index
 
-        Internal(PacketSendEvent event) {
+        Internal(PacketSendEvent event, UUID playerId) {
+            this.playerId = playerId;
             packet = new WrapperPlayServerDeclareCommands(event);
             nodes = packet.getNodes();
             rootNode = nodes.get(packet.getRootIndex());
