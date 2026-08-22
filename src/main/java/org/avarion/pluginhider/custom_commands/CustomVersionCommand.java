@@ -41,9 +41,10 @@ public class CustomVersionCommand extends VersionCommand implements MyCustomComm
 
         if (this.testPermission(sender)) {
             if (args.length == 0) {
-                sender.sendMessage("This server is running our own implementation. (Implementing API version "
-                                   + Bukkit.getBukkitVersion()
-                                   + ")");
+                // The no-argument case exposes no per-plugin data, so hand it straight to the
+                // real VersionCommand. That keeps the output byte-identical to an unmodified
+                // server instead of advertising that something is intercepting /version.
+                return super.execute(sender, currentAlias, args);
             }
             else {
                 StringBuilder name = new StringBuilder();

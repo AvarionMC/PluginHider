@@ -46,6 +46,13 @@ dependencies {
     compileOnly "com.github.retrooper:packetevents-spigot:2.13.0"
 
     implementation "org.avarion:yaml:2.2.1"
+
+    testImplementation "org.junit.jupiter:junit-jupiter:5.13.3"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.13.3"
+}
+
+test {
+    useJUnitPlatform()
 }
 
 version = determineVersion()
@@ -65,6 +72,14 @@ tasks.withType(Javadoc).configureEach {
 }
 
 
+// The plain `jar` and `shadowJar` tasks both default to the base name + empty classifier, so
+// without this they write the exact same build/libs/PluginHider-<version>.jar. Whichever ran
+// last won, and the thin `jar` (no shaded org.avarion:yaml) shipping would fail to load. Give
+// the thin jar its own classifier so the shaded jar is the one, unambiguous deliverable.
+jar {
+    archiveClassifier.set('unshaded')
+}
+
 shadowJar {
     archiveBaseName.set(project.description)
     archiveClassifier.set('')
@@ -80,6 +95,10 @@ tasks.register('deploy', Copy) {
     dependsOn shadowJar
     from shadowJar
     into file("${projectDir}/../server/plugins")
+    // Only copy into a local test server when one actually exists next to the project;
+    // on CI (and anyone else's checkout) there is no ../server, so skip instead of
+    // creating a stray directory on every build.
+    onlyIf { file("${projectDir}/../server/plugins").isDirectory() }
 }
 
 processResources {

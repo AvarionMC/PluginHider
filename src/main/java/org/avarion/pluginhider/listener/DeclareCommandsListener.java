@@ -27,8 +27,9 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
         }
 
         if (!(event.getPlayer() instanceof Player)) {
-            PluginHider.logger.warning("DECLARE_COMMANDS to a non-player??");
-            event.setCancelled(true);
+            // We can't identify the recipient (e.g. a transient null very early in login), so we
+            // can't safely filter. Let the packet through unmodified rather than cancelling it,
+            // which would leave that connection with no command tree at all.
             return;
         }
 
@@ -38,10 +39,18 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
 
         Caches.load();
 
-        Internal internal = new Internal(event);
-        filter(internal, internal.rootNode, false);
-        internal.packet.setNodes(internal.newList);
-        internal.packet.write();
+        try {
+            Internal internal = new Internal(event);
+            filter(internal, internal.rootNode, false);
+            internal.packet.setNodes(internal.newList);
+            internal.packet.setRootIndex(0);
+            internal.packet.write();
+        }
+        catch (RuntimeException e) {
+            // Never let a filtering failure disconnect the player or strip their whole command
+            // tree — log it and let the original packet through unmodified.
+            PluginHider.logger.error("Failed to filter DECLARE_COMMANDS; passing it through unmodified", e);
+        }
     }
 
     private boolean hasRedirect(@NotNull Node node) {
@@ -68,8 +77,11 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
 
             data.indexTranslations.put(oldRedirectIndex, newRedirectIndex);
 
-            // Only dig deeper when I don't know it yet
-            handleRedirection(data.nodes.get(oldRedirectIndex), data);
+            // The redirect target now lives in the new list, so its own children and redirect must
+            // be remapped too — otherwise it keeps original indices into the (now smaller) node
+            // list and the client rejects the tree ("Server sent an impossible command tree").
+            filter(data, redirectedNode, true);
+            handleRedirection(redirectedNode, data);
         }
     }
 
@@ -80,9 +92,7 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
 
         List<Integer> newChildren = new ArrayList<>();
 
-        int childIndex = -1;
         for (Integer idx : node.getChildren()) {
-            childIndex += 1;
             if (idx == null) {
                 continue;
             }
@@ -102,7 +112,6 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
                     final int newIndex = data.newList.size();
 
                     newChildren.add(newIndex);
-                    node.getChildren().set(childIndex, newIndex);
                     data.newList.add(child);
                     data.indexTranslations.put(idx, newIndex);
 
@@ -127,6 +136,9 @@ public class DeclareCommandsListener extends PacketListenerAbstract {
             nodes = packet.getNodes();
             rootNode = nodes.get(packet.getRootIndex());
             newList.add(rootNode);
+            // Root is emitted at index 0; record it so a redirect back to root (e.g. /execute)
+            // remaps to 0 instead of duplicating the root node.
+            indexTranslations.put(packet.getRootIndex(), 0);
         }
     }
 }

@@ -1,5 +1,6 @@
 package org.avarion.pluginhider.custom_commands;
 
+import org.avarion.pluginhider.PluginHider;
 import org.avarion.pluginhider.util.Caches;
 import org.avarion.pluginhider.util.Constants;
 import org.avarion.pluginhider.util.ReflectionUtils;
@@ -40,7 +41,9 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
                 return executePaperPlugins(sender, currentAlias, args);
             }
             catch (Exception e) {
-                int a = 1;
+                // Falling back to the Spigot format on a Paper server is itself a tell, so make
+                // the degradation visible in the logs instead of swallowing it silently.
+                PluginHider.logger.warning("Paper /plugins path failed, using Spigot fallback: " + e);
             }
         }
 
@@ -106,8 +109,8 @@ public class CustomPluginsCommand extends PluginsCommand implements MyCustomComm
                 }
             }
             catch (Exception e) {
-                // Skip this provider if we can't get its information
-                int a = 1;
+                // Skip this provider if we can't read its metadata.
+                PluginHider.logger.warning("Skipping an unreadable plugin provider: " + e);
             }
         }
 

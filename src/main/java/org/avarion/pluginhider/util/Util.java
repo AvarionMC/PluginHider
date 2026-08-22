@@ -21,7 +21,7 @@ public class Util {
         return cacheCommand.computeIfAbsent(
                 command, cmd -> {
                     cmd = cleanupWord(cmd);
-                    if (cmd.charAt(0) == '/') {
+                    if (!cmd.isEmpty() && cmd.charAt(0) == '/') {
                         return cmd.substring(1);
                     }
                     return cmd;
