@@ -12,27 +12,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Verifies that org.avarion:yaml leniently coerces a scalar string value into a single-element set
- * for a {@code Map<String, Set<String>>} field — the behaviour the player_plugins design relies on.
+ * Verifies the two things the player_plugins design leans on org.avarion:yaml for: parsing UUID map
+ * keys directly (no manual conversion) and leniently coercing a scalar {@code "*"} value into a
+ * single-element set.
  */
 class YamlCoercionProbeTest {
     @YamlFile(lenient = Leniency.LENIENT)
     public static class ProbeConfig extends YamlFileInterface {
         @YamlKey("player_plugins")
-        public Map<String, Set<String>> playerPlugins = Map.of();
+        public Map<UUID, Set<String>> playerPlugins = Map.of();
     }
 
     @Test
-    void scalarStarCoercesToSingletonSet(@TempDir Path dir) throws Exception {
+    void parsesUuidKeysAndCoercesScalarStar(@TempDir Path dir) throws Exception {
+        UUID everything = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        UUID scoped = UUID.fromString("11111111-1111-1111-1111-111111111111");
+
         File f = dir.resolve("probe.yml").toFile();
         Files.writeString(f.toPath(), """
                 player_plugins:
-                  aaaa: "*"
-                  bbbb:
+                  00000000-0000-0000-0000-000000000000: "*"
+                  11111111-1111-1111-1111-111111111111:
                     - Essentials
                     - WorldEdit
                 """);
@@ -40,7 +45,7 @@ class YamlCoercionProbeTest {
         ProbeConfig c = new ProbeConfig();
         c.load(f);
 
-        assertEquals(Set.of("*"), c.playerPlugins.get("aaaa"), "scalar \"*\" should coerce to [\"*\"]");
-        assertEquals(Set.of("Essentials", "WorldEdit"), c.playerPlugins.get("bbbb"));
+        assertEquals(Set.of("*"), c.playerPlugins.get(everything), "scalar \"*\" should coerce to [\"*\"]");
+        assertEquals(Set.of("Essentials", "WorldEdit"), c.playerPlugins.get(scoped));
     }
 }

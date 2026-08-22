@@ -131,7 +131,7 @@ public class Settings extends YamlFileInterface {
                   - Essentials
                   - WorldEdit""")
     @YamlKey("player_plugins")
-    public Map<String, Set<String>> playerPlugins = Map.of();
+    public Map<UUID, Set<String>> playerPlugins = Map.of();
 
     public boolean hideAll = true;
 
@@ -164,32 +164,20 @@ public class Settings extends YamlFileInterface {
         super.save(config);
     }
 
-    private @NotNull Map<UUID, Set<String>> normalizeGrants(@Nullable Map<String, Set<String>> raw) {
+    // yaml parses the UUID keys for us; we only lowercase the plugin-name values so grant lookups
+    // are case-insensitive (and keep the "*" wildcard verbatim).
+    private @NotNull Map<UUID, Set<String>> normalizeGrants(@Nullable Map<UUID, Set<String>> raw) {
         if (raw == null) {
             return Map.of();
         }
 
         Map<UUID, Set<String>> result = new HashMap<>();
-        for (Map.Entry<String, Set<String>> entry : raw.entrySet()) {
-            final UUID id = parseUuidOrNull(entry.getKey());
-            if (id != null && entry.getValue() != null) {
-                result.put(id, normalizePlugins(entry.getValue()));
+        for (Map.Entry<UUID, Set<String>> entry : raw.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                result.put(entry.getKey(), normalizePlugins(entry.getValue()));
             }
         }
         return Map.copyOf(result);
-    }
-
-    private static @Nullable UUID parseUuidOrNull(@Nullable String key) {
-        if (key == null) {
-            return null;
-        }
-        try {
-            return UUID.fromString(key.trim());
-        }
-        catch (IllegalArgumentException ex) {
-            PluginHider.logger.warning("Ignoring invalid UUID in player_plugins: " + key);
-            return null;
-        }
     }
 
     // Keep "*" verbatim (it means "everything"); lowercase real plugin names to match lookups.
