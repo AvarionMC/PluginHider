@@ -47,7 +47,7 @@ dependencies {
     implementation "org.avarion:yaml:2.3.0"
 
     testImplementation "org.junit.jupiter:junit-jupiter:5.14.4"
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.13.3"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.14.4"
     testImplementation "io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT"
 }
 
