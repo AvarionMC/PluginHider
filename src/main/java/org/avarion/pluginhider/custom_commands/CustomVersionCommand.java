@@ -25,6 +25,7 @@ import java.util.Locale;
  * allowed to see, {@code /version} is byte-identical to an unmodified server — and a hidden plugin
  * looks exactly as if it were never installed.
  */
+@SuppressWarnings("removal") // extending the deprecated default command keeps its metadata identical and lets super.execute() render the server version
 public class CustomVersionCommand extends VersionCommand implements MyCustomCommand {
     private static final Component NOT_RUNNING = Component.text()
             .append(Component.text("This server is not running any plugin by that name."))

@@ -125,7 +125,7 @@ public class PluginHider extends JavaPlugin {
         PluginCommand cmd = getCommand("pluginhider");
         if (cmd == null) {
             logger.error("Cannot find the pluginhider command??");
-            getPluginLoader().disablePlugin(this);
+            Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
 

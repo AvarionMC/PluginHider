@@ -30,6 +30,7 @@ import java.util.TreeMap;
  * indistinguishable from ones that were never installed. Plugin providers are still enumerated by
  * reflection because those types are server-internal, not part of the API.
  */
+@SuppressWarnings("removal") // extending the deprecated default command keeps its permission/description/usage metadata identical
 public class CustomPluginsCommand extends PluginsCommand implements MyCustomCommand {
     private static final TextColor INFO_COLOR = TextColor.color(52, 159, 218);
 
